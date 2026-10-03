@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vans Warped Tour Orlando - Lineup Rating & Conflict Resolver</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            punk: ['"Chakra Petch"', 'sans-serif'],
+          },
+          colors: {
+            warped: {
+              black: '#0a0a0c',
+              dark: '#141418',
+              card: '#1b1b22',
+              border: '#2a2a36',
+              yellow: '#ffe600',
+              pink: '#ff2a85',
+              cyan: '#00f0ff',
+              orange: '#ff6b00',
+              green: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Warped Tour punk style badges and scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121217;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333344;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff2a85;
+    }
+    .checkered-pattern {
+      background-image: 
+        linear-gradient(45deg, #181820 25%, transparent 25%), 
+        linear-gradient(-45deg, #181820 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #181820 75%), 
+        linear-gradient(-45deg, transparent 75%, #181820 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+    .text-glow-yellow {
+      text-shadow: 0 0 12px rgba(255, 230, 0, 0.4);
+    }
+    .text-glow-pink {
+      text-shadow: 0 0 12px rgba(255, 42, 133, 0.4);
+    }
+  </style>
+</head>
+<body class="bg-warped-black text-gray-100 min-h-screen font-sans antialiased selection:bg-warped-pink selection:text-white pb-24">
+
+  <header class="border-b border-warped-border bg-warped-dark/90 backdrop-blur sticky top-0 z-40 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-9 h-9 bg-warped-yellow text-black font-punk font-extrabold flex items-center justify-center rounded-lg shadow-md transform -rotate-3 text-lg border-2 border-white">
+              VWT
+            </span>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="font-punk text-xl sm:text-2xl font-black tracking-wider uppercase text-white flex items-center gap-1.5">
+                  Vans Warped Tour <span class="text-warped-yellow text-glow-yellow">Orlando</span>
+                </h1>
+                <span class="bg-warped-pink/20 text-warped-pink text-xs font-bold px-2 py-0.5 rounded border border-warped-pink/40 uppercase">Rater & Clash</span>
+              </div>
+              <p class="text-xs text-gray-400">Consensus ratings • Clash resolver • Early gate arrival alerts</p>
+            </div>
+          </div>
+          <!-- Mobile Stats trigger -->
+          <div class="sm:hidden flex items-center gap-1">
+            <button onclick="toggleRatersModal(true)" class="p-2 bg-warped-card border border-warped-border rounded-lg text-warped-yellow text-xs font-bold">
+              👥 Friends (<span id="mobile-rater-count">4</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Top Action Controls -->
+        <div class="flex items-center gap-2.5 flex-wrap justify-end w-full sm:w-auto">
+          <button onclick="toggleRatersModal(true)" class="hidden sm:inline-flex items-center gap-1.5 bg-warped-card hover:bg-zinc-800 border border-warped-border px-3.5 py-1.5 rounded-lg text-xs font-semibold text-gray-200 hover:text-white transition">
+            <svg class="w-4 h-4 text-warped-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <span>Manage Friends (<span id="rater-count-badge">4</span>)</span>
+          </button>
+
+          <button onclick="openAddArtistModal()" class="inline-flex items-center gap-1.5 bg-warped-yellow hover:bg-yellow-300 text-black font-bold px-3.5 py-1.5 rounded-lg text-xs transition shadow-md hover:shadow-yellow-500/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+            <span>Add Artist</span>
+          </button>
+
+          <div class="relative group">
+            <button class="p-1.5 bg-warped-card border border-warped-border rounded-lg text-gray-400 hover:text-white">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
+            </button>
+            <div class="absolute right-0 mt-1 w-44 bg-warped-card border border-warped-border rounded-xl shadow-2xl py-1 hidden group-hover:block z-50">
+              <button onclick="exportToCSV()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export CSV Spreadsheet
+              </button>
+              <button onclick="document.getElementById('csv-file-input').click()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Import CSV File
+              </button>
+              <button onclick="resetToSampleLineup()" class="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-warped-border hover:text-red-300 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Reload Default Lineup
+              </button>
+            </div>
+            <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="importCSV(event)">
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5 space-y-6">
+
+    <!-- Early Gates & Priority Alert Ribbon -->
+    <div id="early-arrival-banner" class="bg-gradient-to-r from-amber-950/60 via-warped-dark to-purple-950/50 border border-amber-500/40 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <div class="p-2.5 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-400 shrink-0">
+          <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-punk font-bold text-amber-400 text-sm tracking-wide uppercase">Gate Arrival Advisory</span>
+            <span id="early-bird-count" class="bg-amber-400 text-black text-xs font-extrabold px-2 py-0.2 rounded-full">0 Early Must-Sees</span>
+          </div>
+          <p id="early-arrival-desc" class="text-xs text-gray-300 mt-0.5">
+            Calculating high-rated opener sets starting before 2:00 PM...
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 w-full md:w-auto shrink-0">
+        <button onclick="filterEarlyBands()" class="w-full md:w-auto px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs rounded-lg transition">
+          View Early Openers
+        </button>
+      </div>
+    </div>
+
+    <!-- Active View Switcher Navigation Tabs -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-warped-border pb-3">
+      <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <button id="tab-btn-spreadsheet" onclick="switchView('spreadsheet')" class="px-4 py-2 rounded-lg text-xs font-bold font-punk tracking-wide uppercase flex items-center gap-2 bg-warped-yellow text-black shadow-md transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Lineup Spreadsheet (<span id="total-artists-stat">0</span>)
+        </button>
+        <button id="tab-btn-conflicts" onclick="switchView('conflicts')" class="px-4 py-2 rounded-lg text-xs font-bold font-punk tracking-wide uppercase flex items-center gap-2 bg-warped-card hover:bg-zinc-800 text-gray-300 border border-warped-border transition">
+          <svg class="w-4 h-4 text-warped-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          Conflict Resolver
+          <span id="clash-badge" class="bg-warped-pink text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">0</span>
+        </button>
+        <button id="tab-btn-schedule" onclick="switchView('schedule')" class="px-4 py-2 rounded-lg text-xs font-bold font-punk tracking-wide uppercase flex items-center gap-2 bg-warped-card hover:bg-zinc-800 text-gray-300 border border-warped-border transition">
+          <svg class="w-4 h-4 text-warped-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Consensus Day Plan
+        </button>
+      </div>
+
+      <!-- Quick Metrics Summary Badge -->
+      <div class="flex items-center gap-3 text-xs text-gray-400">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          Avg Rating Scale: <strong>1 - 10</strong>
+        </span>
+        <span class="hidden md:inline text-warped-border">|</span>
+        <span class="hidden md:inline">Auto-saves locally</span>
+      </div>
+    </div>
+
+    <section id="view-spreadsheet" class="space-y-4">
+      <!-- Filter Bar -->
+      <div class="bg-warped-card border border-warped-border p-3.5 rounded-xl shadow flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div class="flex items-center gap-2.5 flex-1">
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" id="filter-search" oninput="renderApp()" placeholder="Search artist or stage..." class="w-full bg-warped-dark border border-warped-border rounded-lg pl-9 pr-3 py-1.5 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-warped-yellow transition">
+          </div>
+          <select id="filter-day" onchange="renderApp()" class="bg-warped-dark border border-warped-border text-gray-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-warped-yellow">
+            <option value="all">All Days</option>
+            <option value="Saturday">Day 1 (Saturday)</option>
+            <option value="Sunday">Day 2 (Sunday)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+          <select id="filter-stage" onchange="renderApp()" class="bg-warped-dark border border-warped-border text-gray-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-warped-yellow">
+            <option value="all">All Stages</option>
+            <!-- Injected dynamically -->
+          </select>
+          <select id="filter-clash" onchange="renderApp()" class="bg-warped-dark border border-warped-border text-gray-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-warped-yellow">
+            <option value="all">All Set Types</option>
+            <option value="has_conflict">Time Conflicts Only</option>
+            <option value="must_see">Must-Sees (Avg ≥ 8.0)</option>
+            <option value="early_birds">Early Sets (Before 2 PM)</option>
+          </select>
+          <select id="sort-by" onchange="renderApp()" class="bg-warped-dark border border-warped-border text-gray-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-warped-yellow">
+            <option value="avg-desc">Average Rating (Highest First)</option>
+            <option value="time-asc">Set Time (Earliest First)</option>
+            <option value="name-asc">Artist Name (A-Z)</option>
+            <option value="conflict-first">Clashing First</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Main Spreadsheet Interactive Grid -->
+      <div class="bg-warped-card border border-warped-border rounded-xl shadow-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-warped-dark text-gray-400 font-punk uppercase tracking-wider text-[11px] border-b border-warped-border">
+              <tr>
+                <th class="py-3 px-3 w-12 text-center">Day</th>
+                <th class="py-3 px-3 min-w-[130px]">Set Time</th>
+                <th class="py-3 px-3 min-w-[190px]">Artist / Band</th>
+                <th class="py-3 px-3 min-w-[140px]">Stage</th>
+                <th class="py-3 px-3 w-28 text-center bg-zinc-900/90 text-warped-yellow border-x border-warped-border">Group Average</th>
+                <!-- Injected friend column headers -->
+                <th id="dynamic-rater-headers" class="py-3 px-1 text-center bg-zinc-900/40"></th>
+                <th class="py-3 px-3 w-28 text-center">Status / Clash</th>
+                <th class="py-3 px-2 w-16 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="lineup-table-body" class="divide-y divide-warped-border text-gray-200 font-sans">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+        <!-- Table Footer Pagination / Quick Summary -->
+        <div class="p-3 bg-warped-dark/60 border-t border-warped-border flex flex-col sm:flex-row items-center justify-between text-xs text-gray-400 gap-2">
+          <div>Showing <span id="visible-count" class="text-white font-bold">0</span> of <span id="total-count" class="text-white font-bold">0</span> festival acts</div>
+          <div class="flex items-center gap-3">
+            <span class="flex items-center gap-1 text-[11px]"><span class="w-2.5 h-2.5 rounded bg-warped-pink/30 border border-warped-pink"></span> Time Conflict</span>
+            <span class="flex items-center gap-1 text-[11px]"><span class="w-2.5 h-2.5 rounded bg-amber-400/30 border border-amber-400"></span> Early Opener Alert</span>
+            <span class="flex items-center gap-1 text-[11px]"><span class="w-2.5 h-2.5 rounded bg-emerald-400/30 border border-emerald-400"></span> Top Rated (≥8.0)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-conflicts" class="space-y-5 hidden">
+      <div class="bg-warped-card border border-warped-border p-4 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-punk text-lg font-bold text-warped-pink uppercase tracking-wide flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Head-to-Head Clash Matrix
+          </h2>
+          <p class="text-xs text-gray-400">Sets that overlap on the clock. The highest group average is crowned the consensus winner!</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <select id="conflict-filter-day" onchange="renderConflicts()" class="bg-warped-dark border border-warped-border text-gray-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none">
+            <option value="all">All Days</option>
+            <option value="Saturday">Saturday Clashes</option>
+            <option value="Sunday">Sunday Clashes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Conflicts Container -->
+      <div id="conflicts-container" class="grid grid-cols-1 gap-4">
+        <!-- Rendered conflict clash cards -->
+      </div>
+    </section>
+
+    <section id="view-schedule" class="space-y-5 hidden">
+      <div class="bg-warped-card border border-warped-border p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-punk text-lg font-bold text-warped-cyan uppercase tracking-wide flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+            Optimal Consensus Day Plan
+          </h2>
+          <p class="text-xs text-gray-400">Our group's recommended festival itinerary: automatic conflict winner pick with arrival advisory!</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="filterScheduleDay('Saturday')" id="sched-btn-sat" class="px-3 py-1.5 rounded-lg text-xs font-bold font-punk bg-warped-yellow text-black">
+            Saturday
+          </button>
+          <button onclick="filterScheduleDay('Sunday')" id="sched-btn-sun" class="px-3 py-1.5 rounded-lg text-xs font-bold font-punk bg-warped-dark border border-warped-border text-gray-300">
+            Sunday
+          </button>
+        </div>
+      </div>
+
+      <!-- Itinerary List -->
+      <div id="schedule-timeline" class="space-y-3">
+        <!-- Injected schedule cards -->
+      </div>
+    </section>
+  </main>
+
+  <div id="raters-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-warped-card border border-warped-border w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-warped-border pb-3">
+        <div>
+          <h3 class="font-punk text-lg font-bold text-white uppercase flex items-center gap-2">
+            <svg class="w-5 h-5 text-warped-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            Festival Squad Raters
+          </h3>
+          <p class="text-xs text-gray-400">Add or rename everyone in your crew. Starts with 3-5, add more anytime!</p>
+        </div>
+        <button onclick="toggleRatersModal(false)" class="p-1 text-gray-400 hover:text-white rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- List of active raters -->
+      <div id="raters-list-container" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+        <!-- Injected friend items -->
+      </div>
+
+      <!-- Add new friend input -->
+      <div class="flex gap-2 pt-2 border-t border-warped-border">
+        <input type="text" id="new-rater-name" placeholder="Enter friend's name (e.g. Mike)" class="flex-1 bg-warped-dark border border-warped-border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-warped-yellow">
+        <button onclick="addNewRater()" class="px-4 py-2 bg-warped-yellow hover:bg-yellow-300 text-black font-bold text-xs rounded-lg transition whitespace-nowrap">
+          + Add Rater
+        </button>
+      </div>
+
+      <div class="text-[11px] text-gray-400 bg-warped-dark p-2.5 rounded-lg border border-warped-border/60">
+        💡 <strong>Pro-Tip:</strong> Ratings are on a 1 - 10 scale (or 0 for skipped). Adding someone automatically gives them a score column. Empty scores don't hurt the band's average!
+      </div>
+    </div>
+  </div>
+
+  <div id="artist-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-warped-card border border-warped-border w-full max-w-lg rounded-2xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-warped-border pb-3">
+        <h3 id="artist-modal-title" class="font-punk text-lg font-bold text-white uppercase">Add Festival Artist</h3>
+        <button onclick="closeArtistModal()" class="p-1 text-gray-400 hover:text-white rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <form id="artist-form" onsubmit="handleSaveArtist(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="form-artist-id">
+
+        <div>
+          <label class="block text-gray-300 font-semibold mb-1">Artist / Band Name *</label>
+          <input type="text" id="form-artist-name" required placeholder="e.g. Yellowcard" class="w-full bg-warped-dark border border-warped-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-warped-yellow">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-300 font-semibold mb-1">Festival Day *</label>
+            <select id="form-artist-day" required class="w-full bg-warped-dark border border-warped-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-warped-yellow">
+              <option value="Saturday">Saturday (Day 1)</option>
+              <option value="Sunday">Sunday (Day 2)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-300 font-semibold mb-1">Stage *</label>
+            <input type="text" id="form-artist-stage" required placeholder="e.g. Vans Left Foot" list="stage-suggestions" class="w-full bg-warped-dark border border-warped-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-warped-yellow">
+            <datalist id="stage-suggestions">
+              <option value="Vans Left Foot">
+              <option value="Vans Right Foot">
+              <option value="Ghost Stage">
+              <option value="Beatbox Stage">
+              <option value="Club Wyndham Stage">
+              <option value="Trojan Stage">
+            </datalist>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-300 font-semibold mb-1">Start Time (24h or HH:MM) *</label>
+            <input type="time" id="form-artist-start" required class="w-full bg-warped-dark border border-warped-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-warped-yellow">
+          </div>
+          <div>
+            <label class="block text-gray-300 font-semibold mb-1">End Time (24h or HH:MM) *</label>
+            <input type="time" id="form-artist-end" required class="w-full bg-warped-dark border border-warped-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-warped-yellow">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-gray-300 font-semibold mb-1">Genre / Notes (Optional)</label>
+          <input type="text" id="form-artist-notes" placeholder="e.g. Pop-punk revival, 20-year album playthrough" class="w-full bg-warped-dark border border-warped-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-warped-yellow">
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeArtistModal()" class="px-4 py-2 bg-warped-dark border border-warped-border text-gray-300 rounded-lg hover:text-white transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-warped-yellow hover:bg-yellow-300 text-black font-bold rounded-lg transition shadow-md">
+            Save Artist
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2.5 bg-warped-card border border-warped-yellow text-white text-xs px-4 py-3 rounded-xl shadow-2xl">
+    <svg id="toast-icon" class="w-4 h-4 text-warped-yellow shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <span id="toast-message">Action successful</span>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'warped_tour_orlando_data_v2';
+
+    // Initial authentic Warped Tour Orlando lineup snapshot with real stages and conflicting set times
+    const DEFAULT_RATERS = [
+      { id: 'rater_1', name: 'Alex' },
+      { id: 'rater_2', name: 'Jordan' },
+      { id: 'rater_3', name: 'Taylor' },
+      { id: 'rater_4', name: 'Sam' }
+    ];
+
+    const DEFAULT_ARTISTS = [
+      // SATURDAY (Day 1)
+      {
+        id: 'art_1',
+        name: 'Walking Blue',
+        day: 'Saturday',
+        stage: 'Vans Left Foot',
+        startTime: '12:10',
+        endTime: '12:35',
+        notes: 'Early gate energetic opener',
+        ratings: { rater_1: 7, rater_2: 6, rater_3: 8, rater_4: 7 }
+      },
+      {
+        id: 'art_2',
+        name: 'Dan Kelly',
+        day: 'Saturday',
+        stage: 'Geico Stage',
+        startTime: '12:15',
+        endTime: '12:45',
+        notes: 'Acoustic vibe',
+        ratings: { rater_1: 5, rater_2: 4, rater_3: 6, rater_4: 5 }
+      },
+      {
+        id: 'art_3',
+        name: 'Head Automatica',
+        day: 'Saturday',
+        stage: 'Ghost Stage',
+        startTime: '12:32',
+        endTime: '13:02',
+        notes: 'Classic post-hardcore electronic dance rock',
+        ratings: { rater_1: 9, rater_2: 8, rater_3: 9, rater_4: 9 }
+      },
+      {
+        id: 'art_4',
+        name: 'The Maine',
+        day: 'Saturday',
+        stage: 'Vans Right Foot',
+        startTime: '12:38',
+        endTime: '13:08',
+        notes: 'Alt-rock singalongs',
+        ratings: { rater_1: 8, rater_2: 9, rater_3: 8, rater_4: 9 }
+      },
+      {
+        id: 'art_5',
+        name: 'Escape the Fate',
+        day: 'Saturday',
+        stage: 'Vans Left Foot',
+        startTime: '13:21',
+        endTime: '13:51',
+        notes: 'Post-hardcore anthems',
+        ratings: { rater_1: 7, rater_2: 6, rater_3: 7, rater_4: 7 }
+      },
+      {
+        id: 'art_6',
+        name: 'Knuckle Puck',
+        day: 'Saturday',
+        stage: 'Ghost Stage',
+        startTime: '13:38',
+        endTime: '14:08',
+        notes: 'High energy pop punk',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 9 }
+      },
+      {
+        id: 'art_7',
+        name: 'Mod Sun',
+        day: 'Saturday',
+        stage: 'Vans Right Foot',
+        startTime: '13:54',
+        endTime: '14:29',
+        notes: 'Hip-hop / Pop-punk crossover',
+        ratings: { rater_1: 6, rater_2: 5, rater_3: 7, rater_4: 6 }
+      },
+      {
+        id: 'art_8',
+        name: 'Story of the Year',
+        day: 'Saturday',
+        stage: 'Vans Left Foot',
+        startTime: '14:32',
+        endTime: '15:07',
+        notes: 'Page Avenue hits & backflips',
+        ratings: { rater_1: 10, rater_2: 9, rater_3: 10, rater_4: 9 }
+      },
+      {
+        id: 'art_9',
+        name: 'Fame On Fire',
+        day: 'Saturday',
+        stage: 'Ghost Stage',
+        startTime: '14:44',
+        endTime: '15:14',
+        notes: 'Modern rock / hard rock',
+        ratings: { rater_1: 7, rater_2: 6, rater_3: 6, rater_4: 6 }
+      },
+      {
+        id: 'art_10',
+        name: 'Plain White Ts',
+        day: 'Saturday',
+        stage: 'Vans Right Foot',
+        startTime: '15:10',
+        endTime: '15:50',
+        notes: 'Hey There Delilah massive crowd singalong',
+        ratings: { rater_1: 7, rater_2: 8, rater_3: 8, rater_4: 7 }
+      },
+      {
+        id: 'art_11',
+        name: 'Slaughter to Prevail',
+        day: 'Saturday',
+        stage: 'Vans Left Foot',
+        startTime: '15:53',
+        endTime: '16:33',
+        notes: 'Masked deathcore chaos & wall of death',
+        ratings: { rater_1: 8, rater_2: 5, rater_3: 7, rater_4: 8 }
+      },
+      {
+        id: 'art_12',
+        name: '3OH!3',
+        day: 'Saturday',
+        stage: 'Vans Right Foot',
+        startTime: '16:36',
+        endTime: '17:26',
+        notes: 'DONTTRUSTME party nostalgia',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 10 }
+      },
+      {
+        id: 'art_13',
+        name: 'Crown the Empire',
+        day: 'Saturday',
+        stage: 'Ghost Stage',
+        startTime: '16:56',
+        endTime: '17:31',
+        notes: 'Post-hardcore / metalcore',
+        ratings: { rater_1: 7, rater_2: 7, rater_3: 6, rater_4: 6 }
+      },
+      {
+        id: 'art_14',
+        name: 'Black Veil Brides',
+        day: 'Saturday',
+        stage: 'Vans Left Foot',
+        startTime: '17:29',
+        endTime: '18:19',
+        notes: 'The Legacy & In the End',
+        ratings: { rater_1: 8, rater_2: 7, rater_3: 8, rater_4: 7 }
+      },
+      {
+        id: 'art_15',
+        name: 'Pennywise',
+        day: 'Saturday',
+        stage: 'Vans Right Foot',
+        startTime: '18:22',
+        endTime: '19:22',
+        notes: 'SoCal Punk legends / Bro Hymn',
+        ratings: { rater_1: 8, rater_2: 9, rater_3: 9, rater_4: 8 }
+      },
+      {
+        id: 'art_16',
+        name: 'The Devil Wears Prada',
+        day: 'Saturday',
+        stage: 'Ghost Stage',
+        startTime: '19:28',
+        endTime: '20:08',
+        notes: 'Zombie EP & heavy metalcore',
+        ratings: { rater_1: 9, rater_2: 8, rater_3: 8, rater_4: 8 }
+      },
+      {
+        id: 'art_17',
+        name: 'Yellowcard',
+        day: 'Saturday',
+        stage: 'Vans Left Foot',
+        startTime: '19:25',
+        endTime: '20:25',
+        notes: 'Ocean Avenue violin & Florida hometown crowd!',
+        ratings: { rater_1: 10, rater_2: 10, rater_3: 10, rater_4: 10 }
+      },
+      {
+        id: 'art_18',
+        name: 'Wage War',
+        day: 'Saturday',
+        stage: 'Ghost Stage',
+        startTime: '20:54',
+        endTime: '21:34',
+        notes: 'Florida metalcore favorites',
+        ratings: { rater_1: 8, rater_2: 7, rater_3: 8, rater_4: 8 }
+      },
+      {
+        id: 'art_19',
+        name: 'State Champs',
+        day: 'Saturday',
+        stage: 'Beatbox Stage',
+        startTime: '21:37',
+        endTime: '22:17',
+        notes: 'Pop-punk kings',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 9, rater_4: 8 }
+      },
+      {
+        id: 'art_20',
+        name: 'Falling In Reverse',
+        day: 'Saturday',
+        stage: 'Vans Left Foot',
+        startTime: '21:46',
+        endTime: '23:00',
+        notes: 'Saturday Headliner',
+        ratings: { rater_1: 8, rater_2: 7, rater_3: 9, rater_4: 8 }
+      },
+
+      // SUNDAY (Day 2)
+      {
+        id: 'art_21',
+        name: 'Alyk',
+        day: 'Sunday',
+        stage: 'Vans Left Foot',
+        startTime: '11:25',
+        endTime: '11:50',
+        notes: 'Early gate Sunday opener',
+        ratings: { rater_1: 6, rater_2: 6, rater_3: 5, rater_4: 6 }
+      },
+      {
+        id: 'art_22',
+        name: 'Girlfriends',
+        day: 'Sunday',
+        stage: 'Vans Left Foot',
+        startTime: '12:26',
+        endTime: '12:56',
+        notes: 'Travis Barker produced pop punk',
+        ratings: { rater_1: 8, rater_2: 7, rater_3: 8, rater_4: 8 }
+      },
+      {
+        id: 'art_23',
+        name: 'We the Kings',
+        day: 'Sunday',
+        stage: 'Vans Right Foot',
+        startTime: '12:59',
+        endTime: '13:34',
+        notes: 'Florida natives (Check Yes Juliet)',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 10, rater_4: 9 }
+      },
+      {
+        id: 'art_24',
+        name: 'The Red Jumpsuit Apparatus',
+        day: 'Sunday',
+        stage: 'Vans Left Foot',
+        startTime: '13:37',
+        endTime: '14:12',
+        notes: 'Face Down & Don\'t You Fake It',
+        ratings: { rater_1: 9, rater_2: 8, rater_3: 9, rater_4: 8 }
+      },
+      {
+        id: 'art_25',
+        name: 'Bowling for Soup',
+        day: 'Sunday',
+        stage: 'Vans Right Foot',
+        startTime: '14:20',
+        endTime: '15:00',
+        notes: '1985 & Girl All the Bad Guys Want',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 9 }
+      },
+      {
+        id: 'art_26',
+        name: 'Mayday Parade',
+        day: 'Sunday',
+        stage: 'Vans Left Foot',
+        startTime: '14:58',
+        endTime: '15:38',
+        notes: 'Florida heroes (Miserable at Best)',
+        ratings: { rater_1: 10, rater_2: 10, rater_3: 9, rater_4: 10 }
+      },
+      {
+        id: 'art_27',
+        name: 'August Burns Red',
+        day: 'Sunday',
+        stage: 'Beatbox Stage',
+        startTime: '15:13',
+        endTime: '15:43',
+        notes: 'Heavy breakdowns',
+        ratings: { rater_1: 8, rater_2: 7, rater_3: 7, rater_4: 7 }
+      },
+      {
+        id: 'art_28',
+        name: 'The Wonder Years',
+        day: 'Sunday',
+        stage: 'Beatbox Stage',
+        startTime: '16:24',
+        endTime: '16:59',
+        notes: 'Came Out Swinging emo anthems',
+        ratings: { rater_1: 10, rater_2: 9, rater_3: 10, rater_4: 9 }
+      },
+      {
+        id: 'art_29',
+        name: 'Killswitch Engage',
+        day: 'Sunday',
+        stage: 'Vans Left Foot',
+        startTime: '16:34',
+        endTime: '17:24',
+        notes: 'Metalcore royalty (My Curse)',
+        ratings: { rater_1: 8, rater_2: 7, rater_3: 7, rater_4: 8 }
+      },
+      {
+        id: 'art_30',
+        name: 'Gym Class Heroes',
+        day: 'Sunday',
+        stage: 'Ghost Stage',
+        startTime: '17:02',
+        endTime: '17:42',
+        notes: 'Cupid\'s Chokehold & Stereo Hearts',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 9 }
+      },
+      {
+        id: 'art_31',
+        name: 'Four Year Strong',
+        day: 'Sunday',
+        stage: 'Beatbox Stage',
+        startTime: '17:45',
+        endTime: '18:25',
+        notes: 'Heavy melodic hardcore/easycore',
+        ratings: { rater_1: 9, rater_2: 8, rater_3: 8, rater_4: 9 }
+      },
+      {
+        id: 'art_32',
+        name: 'Chiodos',
+        day: 'Sunday',
+        stage: 'Ghost Stage',
+        startTime: '18:28',
+        endTime: '19:08',
+        notes: 'Craig Owens post-hardcore reunion',
+        ratings: { rater_1: 9, rater_2: 8, rater_3: 9, rater_4: 9 }
+      },
+      {
+        id: 'art_33',
+        name: 'Senses Fail',
+        day: 'Sunday',
+        stage: 'Ghost Stage',
+        startTime: '19:54',
+        endTime: '20:34',
+        notes: 'Let It Enfold You classics',
+        ratings: { rater_1: 8, rater_2: 8, rater_3: 9, rater_4: 8 }
+      },
+      {
+        id: 'art_34',
+        name: 'Boys Like Girls',
+        day: 'Sunday',
+        stage: 'Ghost Stage',
+        startTime: '21:20',
+        endTime: '22:00',
+        notes: 'The Great Escape nostalgia',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 8 }
+      },
+      {
+        id: 'art_35',
+        name: 'Less Than Jake',
+        day: 'Sunday',
+        stage: 'Beatbox Stage',
+        startTime: '20:37',
+        endTime: '21:17',
+        notes: 'Gainesville FL ska-punk royalty',
+        ratings: { rater_1: 9, rater_2: 9, rater_3: 9, rater_4: 9 }
+      },
+      {
+        id: 'art_36',
+        name: 'Streetlight Manifesto',
+        day: 'Sunday',
+        stage: 'Owen\'s Mixers',
+        startTime: '21:25',
+        endTime: '22:00',
+        notes: 'High-octane horns & intricate ska',
+        ratings: { rater_1: 9, rater_2: 8, rater_3: 10, rater_4: 8 }
+      }
+    ];
+
+    let raters = [];
+    let artists = [];
+    let currentView = 'spreadsheet';
+    let scheduleDay = 'Saturday';
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          raters = parsed.raters || DEFAULT_RATERS;
+          artists = parsed.artists || DEFAULT_ARTISTS;
+        } else {
+          raters = JSON.parse(JSON.stringify(DEFAULT_RATERS));
+          artists = JSON.parse(JSON.stringify(DEFAULT_ARTISTS));
+          saveState();
+        }
+      } catch (e) {
+        console.error("State loading error, resetting to defaults", e);
+        raters = JSON.parse(JSON.stringify(DEFAULT_RATERS));
+        artists = JSON.parse(JSON.stringify(DEFAULT_ARTISTS));
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ raters, artists }));
+      } catch (err) {
+        console.error("Failed to save state to localStorage", err);
+      }
+    }
+
+    function resetToSampleLineup() {
+      raters = JSON.parse(JSON.stringify(DEFAULT_RATERS));
+      artists = JSON.parse(JSON.stringify(DEFAULT_ARTISTS));
+      saveState();
+      renderApp();
+      showToast("Reset to default Orlando Warped Tour lineup!");
+    }
+
+    // Converts "HH:MM" into minutes from midnight for collision detection
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const parts = timeStr.split(':').map(Number);
+      return (parts[0] * 60) + (parts[1] || 0);
+    }
+
+    function formatTime12(timeStr) {
+      if (!timeStr) return '';
+      const [h, m] = timeStr.split(':').map(Number);
+      const period = h >= 12 ? 'PM' : 'AM';
+      const displayHour = h % 12 === 0 ? 12 : h % 12;
+      return `${displayHour}:${m < 10 ? '0' + m : m} ${period}`;
+    }
+
+    // Calculates non-empty ratings average for an artist
+    function getArtistRatingStats(artist) {
+      const validRatings = [];
+      raters.forEach(rater => {
+        const score = artist.ratings && artist.ratings[rater.id];
+        if (score !== undefined && score !== null && score !== '' && !isNaN(score) && Number(score) > 0) {
+          validRatings.push(Number(score));
+        }
+      });
+
+      if (validRatings.length === 0) {
+        return { average: 0, count: 0, formatted: '—', totalScore: 0 };
+      }
+
+      const sum = validRatings.reduce((acc, val) => acc + val, 0);
+      const avg = sum / validRatings.length;
+      return {
+        average: parseFloat(avg.toFixed(1)),
+        count: validRatings.length,
+        formatted: avg.toFixed(1),
+        totalScore: sum
+      };
+    }
+
+    // Determines if two sets clash on the exact same day
+    function doSetsClash(artistA, artistB) {
+      if (artistA.id === artistB.id) return false;
+      if (artistA.day !== artistB.day) return false;
+
+      const aStart = timeToMinutes(artistA.startTime);
+      const aEnd = timeToMinutes(artistA.endTime);
+      const bStart = timeToMinutes(artistB.startTime);
+      const bEnd = timeToMinutes(artistB.endTime);
+
+      // Overlap formula: (StartA < EndB) and (EndA > StartB)
+      return (aStart < bEnd) && (aEnd > bStart);
+    }
+
+    // Gets all conflicting artists for a given artist
+    function getConflictsForArtist(artist) {
+      return artists.filter(other => doSetsClash(artist, other));
+    }
+
+    // Computes all unique clash clusters
+    function getAllConflictClusters(filterDay = 'all') {
+      const clusters = [];
+      const visitedPairs = new Set();
+
+      const dayArtists = filterDay === 'all' ? artists : artists.filter(a => a.day === filterDay);
+
+      dayArtists.forEach(artist => {
+        const clashes = getConflictsForArtist(artist);
+        if (clashes.length > 0) {
+          const group = [artist, ...clashes];
+          // Sort by start time then name for canonical comparison
+          group.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime) || a.name.localeCompare(b.name));
+          
+          const clusterKey = group.map(g => g.id).sort().join('_');
+          if (!visitedPairs.has(clusterKey)) {
+            visitedPairs.add(clusterKey);
+            clusters.push(group);
+          }
+        }
+      });
+
+      // Sort clusters by day and start time
+      return clusters.sort((a, b) => {
+        if (a[0].day !== b[0].day) return a[0].day === 'Saturday' ? -1 : 1;
+        return timeToMinutes(a[0].startTime) - timeToMinutes(b[0].startTime);
+      });
+    }
+
+    function checkEarlyArrivalAlerts() {
+      // Artists starting before 14:00 (2:00 PM) with high average rating >= 8.0
+      const earlyMustSees = artists.filter(a => {
+        const startMins = timeToMinutes(a.startTime);
+        const stats = getArtistRatingStats(a);
+        return startMins <= 840 && stats.average >= 7.5; // before 2 PM & high rating
+      }).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+      const banner = document.getElementById('early-arrival-banner');
+      const countBadge = document.getElementById('early-bird-count');
+      const desc = document.getElementById('early-arrival-desc');
+
+      countBadge.textContent = `${earlyMustSees.length} High-Rated Openers`;
+
+      if (earlyMustSees.length > 0) {
+        const topEarly = earlyMustSees[0];
+        const dayTag = topEarly.day === 'Saturday' ? 'Sat' : 'Sun';
+        desc.innerHTML = `⚠️ <strong>Gate Warning:</strong> High-priority band <strong>${topEarly.name}</strong> plays early at <strong>${formatTime12(topEarly.startTime)} (${dayTag} on ${topEarly.stage})</strong> with a <strong>${getArtistRatingStats(topEarly).formatted}/10</strong> rating! Plan to be in the gate security line by <strong>${topEarly.startTime <= '12:00' ? '11:15 AM' : '12:30 PM'}</strong>.`;
+      } else {
+        desc.textContent = "No early must-see sets before 2:00 PM currently rated ≥ 7.5. Sleep in or score earlier bands!";
+      }
+    }
+
+    function renderSpreadsheetTable() {
+      const tbody = document.getElementById('lineup-table-body');
+      const searchVal = document.getElementById('filter-search').value.toLowerCase().trim();
+      const dayVal = document.getElementById('filter-day').value;
+      const stageVal = document.getElementById('filter-stage').value;
+      const clashVal = document.getElementById('filter-clash').value;
+      const sortBy = document.getElementById('sort-by').value;
+
+      // Update Rater column headers in table header
+      const dynamicHeaderContainer = document.getElementById('dynamic-rater-headers');
+      if (dynamicHeaderContainer) {
+        let headersHtml = '';
+        raters.forEach(r => {
+          headersHtml += `
+            <th class="py-2 px-2 text-center w-20 min-w-[70px] border-r border-warped-border/60">
+              <div class="flex flex-col items-center">
+                <span class="text-white font-bold truncate max-w-[65px] font-sans" title="${r.name}">${r.name}</span>
+                <span class="text-[9px] text-gray-500 font-normal">Score</span>
+              </div>
+            </th>
+          `;
+        });
+        dynamicHeaderContainer.outerHTML = headersHtml ? `<th id="dynamic-rater-headers" class="hidden"></th>${headersHtml}` : '<th id="dynamic-rater-headers"></th>';
+      }
+
+      // Filter artists
+      let filtered = artists.filter(artist => {
+        // Search filter
+        if (searchVal) {
+          const matchesName = artist.name.toLowerCase().includes(searchVal);
+          const matchesStage = artist.stage.toLowerCase().includes(searchVal);
+          const matchesNotes = (artist.notes || '').toLowerCase().includes(searchVal);
+          if (!matchesName && !matchesStage && !matchesNotes) return false;
+        }
+
+        // Day filter
+        if (dayVal !== 'all' && artist.day !== dayVal) return false;
+
+        // Stage filter
+        if (stageVal !== 'all' && artist.stage !== stageVal) return false;
+
+        // Clash filter
+        const conflicts = getConflictsForArtist(artist);
+        const stats = getArtistRatingStats(artist);
+        if (clashVal === 'has_conflict' && conflicts.length === 0) return false;
+        if (clashVal === 'must_see' && stats.average < 8.0) return false;
+        if (clashVal === 'early_birds' && timeToMinutes(artist.startTime) > 840) return false;
+
+        return true;
+      });
+
+      // Sort artists
+      filtered.sort((a, b) => {
+        const statsA = getArtistRatingStats(a);
+        const statsB = getArtistRatingStats(b);
+
+        if (sortBy === 'avg-desc') {
+          if (statsB.average !== statsA.average) return statsB.average - statsA.average;
+          return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+        } else if (sortBy === 'time-asc') {
+          if (a.day !== b.day) return a.day === 'Saturday' ? -1 : 1;
+          return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+        } else if (sortBy === 'name-asc') {
+          return a.name.localeCompare(b.name);
+        } else if (sortBy === 'conflict-first') {
+          const confA = getConflictsForArtist(a).length;
+          const confB = getConflictsForArtist(b).length;
+          if (confB !== confA) return confB - confA;
+          return statsB.average - statsA.average;
+        }
+        return 0;
+      });
+
+      // Render table rows
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${7 + raters.length}" class="py-12 text-center text-gray-500">
+              <svg class="w-8 h-8 mx-auto text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              No artists match your active filter.
+            </td>
+          </tr>
+        `;
+      } else {
+        let html = '';
+        filtered.forEach(artist => {
+          const stats = getArtistRatingStats(artist);
+          const conflicts = getConflictsForArtist(artist);
+          const isEarly = timeToMinutes(artist.startTime) <= 840; // before 2pm
+          const isMustSee = stats.average >= 8.5;
+          const hasClashes = conflicts.length > 0;
+
+          // Average rating badge styling
+          let avgColorClass = 'text-gray-400 bg-warped-dark border-warped-border';
+          if (stats.average >= 8.5) {
+            avgColorClass = 'text-black bg-warped-yellow border-warped-yellow font-extrabold shadow-sm';
+          } else if (stats.average >= 7.0) {
+            avgColorClass = 'text-green-400 bg-green-950/40 border-green-500/40 font-bold';
+          } else if (stats.average > 0) {
+            avgColorClass = 'text-amber-300 bg-amber-950/30 border-amber-500/30';
+          }
+
+          // Individual rater input columns
+          let raterInputs = '';
+          raters.forEach(rater => {
+            const currentScore = (artist.ratings && artist.ratings[rater.id] !== undefined) ? artist.ratings[rater.id] : '';
+            raterInputs += `
+              <td class="py-2 px-1 text-center border-r border-warped-border/40">
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="10" 
+                  step="0.5"
+                  value="${currentScore}"
+                  placeholder="—"
+                  onchange="updateArtistScore('${artist.id}', '${rater.id}', this.value)"
+                  class="w-14 text-center bg-warped-dark border border-warped-border rounded py-1 px-1 text-xs font-semibold text-white focus:outline-none focus:border-warped-yellow focus:ring-1 focus:ring-warped-yellow transition"
+                />
+              </td>
+            `;
+          });
+
+          html += `
+            <tr class="hover:bg-zinc-800/50 transition-colors ${hasClashes ? 'bg-warped-pink/[0.02]' : ''}">
+              <!-- Day -->
+              <td class="py-3 px-3 text-center">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${artist.day === 'Saturday' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'}">
+                  ${artist.day === 'Saturday' ? 'SAT' : 'SUN'}
+                </span>
+              </td>
+
+              <!-- Set Time -->
+              <td class="py-3 px-3 whitespace-nowrap">
+                <div class="font-semibold text-gray-200">${formatTime12(artist.startTime)} - ${formatTime12(artist.endTime)}</div>
+                <div class="text-[10px] text-gray-500">${timeToMinutes(artist.endTime) - timeToMinutes(artist.startTime)} min set</div>
+              </td>
+
+              <!-- Artist Name & Genre -->
+              <td class="py-3 px-3">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-sm text-white font-punk tracking-wide">${artist.name}</span>
+                  ${isMustSee ? '<span class="text-[9px] bg-warped-yellow text-black font-extrabold px-1.5 py-0.2 rounded uppercase">Hype</span>' : ''}
+                  ${isEarly && stats.average >= 7.5 ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold px-1 rounded uppercase">Early</span>' : ''}
+                </div>
+                ${artist.notes ? `<p class="text-[11px] text-gray-400 truncate max-w-xs">${artist.notes}</p>` : ''}
+              </td>
+
+              <!-- Stage -->
+              <td class="py-3 px-3 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1.5 text-xs text-gray-300">
+                  <span class="w-2 h-2 rounded-full bg-warped-pink"></span>
+                  ${artist.stage}
+                </span>
+              </td>
+
+              <!-- Group Average -->
+              <td class="py-3 px-3 text-center border-x border-warped-border bg-zinc-900/60">
+                <div class="inline-flex items-center justify-center min-w-[54px] px-2 py-1 rounded-md border text-xs ${avgColorClass}">
+                  ${stats.formatted}
+                  ${stats.count > 0 ? `<span class="text-[9px] text-gray-400 ml-1 font-normal">(${stats.count}/${raters.length})</span>` : ''}
+                </div>
+              </td>
+
+              <!-- Dynamic Individual Raters -->
+              ${raterInputs}
+
+              <!-- Status / Clash badge -->
+              <td class="py-3 px-3 text-center whitespace-nowrap">
+                ${hasClashes ? `
+                  <button onclick="jumpToClash('${artist.id}')" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-warped-pink/20 text-warped-pink border border-warped-pink/40 hover:bg-warped-pink hover:text-white transition">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    ${conflicts.length} Clash${conflicts.length > 1 ? 'es' : ''}
+                  </button>
+                ` : `
+                  <span class="text-[10px] text-gray-500 flex items-center justify-center gap-1">
+                    <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Clear
+                  </span>
+                `}
+              </td>
+
+              <!-- Action buttons -->
+              <td class="py-3 px-2 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="openEditArtistModal('${artist.id}')" title="Edit Artist Set" class="p-1 text-gray-400 hover:text-warped-yellow transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                  </button>
+                  <button onclick="deleteArtist('${artist.id}')" title="Delete Artist" class="p-1 text-gray-400 hover:text-red-400 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = html;
+      }
+
+      // Update counters
+      document.getElementById('visible-count').textContent = filtered.length;
+      document.getElementById('total-count').textContent = artists.length;
+      document.getElementById('total-artists-stat').textContent = artists.length;
+    }
+
+    function renderConflicts() {
+      const container = document.getElementById('conflicts-container');
+      const filterDay = document.getElementById('conflict-filter-day').value;
+      const clusters = getAllConflictClusters(filterDay);
+
+      // Update badge count
+      document.getElementById('clash-badge').textContent = clusters.length;
+
+      if (clusters.length === 0) {
+        container.innerHTML = `
+          <div class="bg-warped-card border border-warped-border rounded-xl p-12 text-center text-gray-400 space-y-2">
+            <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h3 class="font-punk text-white text-base font-bold uppercase">No Stage Conflicts Detected</h3>
+            <p class="text-xs text-gray-500">All artists in this selection have distinct time slots without overlaps.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      clusters.forEach((group, index) => {
+        const day = group[0].day;
+        
+        // Find consensus winner (highest average score)
+        const ranked = [...group].map(art => {
+          return {
+            artist: art,
+            stats: getArtistRatingStats(art)
+          };
+        }).sort((a, b) => b.stats.average - a.stats.average);
+
+        const winner = ranked[0];
+        const runnerUp = ranked[1];
+        const scoreDiff = (winner.stats.average - (runnerUp ? runnerUp.stats.average : 0)).toFixed(1);
+
+        html += `
+          <div class="bg-warped-card border border-warped-border rounded-xl overflow-hidden shadow-lg hover:border-warped-pink/50 transition">
+            <!-- Conflict Header -->
+            <div class="bg-warped-dark px-4 py-3 border-b border-warped-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-full bg-warped-pink/20 text-warped-pink border border-warped-pink/40 flex items-center justify-center text-xs font-black font-punk">
+                  #${index + 1}
+                </span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded ${day === 'Saturday' ? 'bg-amber-500/20 text-amber-300' : 'bg-cyan-500/20 text-cyan-300'} uppercase">
+                  ${day}
+                </span>
+                <span class="text-xs text-gray-300 font-semibold">
+                  Overlap Window: <strong>${formatTime12(group[0].startTime)} – ${formatTime12(group[group.length - 1].endTime)}</strong>
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-warped-yellow font-punk uppercase tracking-wide">
+                  🏆 Consensus Pick: <strong>${winner.artist.name}</strong> (${winner.stats.formatted}/10)
+                </span>
+                ${Number(scoreDiff) > 0 ? `<span class="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/40 font-bold">+${scoreDiff} edge</span>` : ''}
+              </div>
+            </div>
+
+            <!-- Head to Head Columns -->
+            <div class="p-4 grid grid-cols-1 md:grid-cols-${Math.min(group.length, 3)} gap-4">
+              ${group.map(art => {
+                const stats = getArtistRatingStats(art);
+                const isWinner = art.id === winner.artist.id;
+                
+                return `
+                  <div class="relative bg-warped-dark/70 rounded-xl p-4 border ${isWinner ? 'border-warped-yellow ring-1 ring-warped-yellow/50' : 'border-warped-border'} flex flex-col justify-between space-y-3">
+                    ${isWinner ? `
+                      <div class="absolute -top-2.5 right-3 bg-warped-yellow text-black text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase shadow">
+                        Recommended Must-See
+                      </div>
+                    ` : ''}
+
+                    <div>
+                      <div class="flex items-start justify-between gap-2">
+                        <div>
+                          <h4 class="font-punk text-base font-bold text-white tracking-wide">${art.name}</h4>
+                          <span class="text-[11px] text-gray-400 block">${art.stage}</span>
+                        </div>
+                        <div class="text-right shrink-0">
+                          <span class="text-lg font-punk font-extrabold ${isWinner ? 'text-warped-yellow text-glow-yellow' : 'text-gray-300'}">
+                            ${stats.formatted}
+                          </span>
+                          <span class="text-[10px] text-gray-500 block">/ 10 avg</span>
+                        </div>
+                      </div>
+
+                      <div class="mt-2 text-xs text-gray-400 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>${formatTime12(art.startTime)} - ${formatTime12(art.endTime)}</span>
+                      </div>
+                    </div>
+
+                    <!-- Individual breakdown for this clash band -->
+                    <div class="pt-2 border-t border-warped-border/70 space-y-1">
+                      <div class="text-[10px] font-punk text-gray-400 uppercase tracking-wider">Friend Votes:</div>
+                      <div class="flex flex-wrap gap-1.5">
+                        ${raters.map(r => {
+                          const val = (art.ratings && art.ratings[r.id]) || '—';
+                          const isHigh = Number(val) >= 8;
+                          return `
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 border border-warped-border ${isHigh ? 'text-warped-yellow font-bold' : 'text-gray-300'}">
+                              ${r.name}: ${val}
+                            </span>
+                          `;
+                        }).join('')}
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function filterScheduleDay(day) {
+      scheduleDay = day;
+      document.getElementById('sched-btn-sat').className = day === 'Saturday' 
+        ? 'px-3 py-1.5 rounded-lg text-xs font-bold font-punk bg-warped-yellow text-black' 
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold font-punk bg-warped-dark border border-warped-border text-gray-300';
+      document.getElementById('sched-btn-sun').className = day === 'Sunday' 
+        ? 'px-3 py-1.5 rounded-lg text-xs font-bold font-punk bg-warped-yellow text-black' 
+        : 'px-3 py-1.5 rounded-lg text-xs font-bold font-punk bg-warped-dark border border-warped-border text-gray-300';
+      renderScheduleTimeline();
+    }
+
+    function renderScheduleTimeline() {
+      const container = document.getElementById('schedule-timeline');
+      const dayArtists = artists.filter(a => a.day === scheduleDay);
+
+      // Build optimal itinerary:
+      // Sort artists by start time, and where there are clashes, prioritize highest average rating
+      const sorted = [...dayArtists].sort((a, b) => {
+        return timeToMinutes(a.startTime) - timeToMinutes(b.startTime) || getArtistRatingStats(b).average - getArtistRatingStats(a).average;
+      });
+
+      // Greedy non-overlapping highest rating itinerary
+      const itinerary = [];
+      let lastEndTimeMinutes = 0;
+
+      // First pass: identify sets with average >= 6.0
+      sorted.forEach(act => {
+        const start = timeToMinutes(act.startTime);
+        const end = timeToMinutes(act.endTime);
+        const stats = getArtistRatingStats(act);
+
+        // Check if there is an overlapping set already picked
+        const hasOverlap = itinerary.some(picked => {
+          const pStart = timeToMinutes(picked.startTime);
+          const pEnd = timeToMinutes(picked.endTime);
+          return (start < pEnd) && (end > pStart);
+        });
+
+        if (!hasOverlap && stats.average >= 5.0) {
+          itinerary.push(act);
+        }
+      });
+
+      if (itinerary.length === 0) {
+        container.innerHTML = `
+          <div class="bg-warped-card border border-warped-border p-10 rounded-xl text-center text-gray-500">
+            No rated artists found for ${scheduleDay}. Rate some bands on the spreadsheet to build your timeline!
+          </div>
+        `;
+        return;
+      }
+
+      // Render timeline cards
+      let html = `
+        <div class="bg-gradient-to-r from-cyan-950/40 via-warped-card to-zinc-900 border border-warped-cyan/30 rounded-xl p-4 flex items-center justify-between">
+          <div class="text-xs">
+            <span class="font-punk text-warped-cyan font-bold uppercase">Optimal ${scheduleDay} Route</span>
+            <p class="text-gray-400">Selected ${itinerary.length} consensus must-see sets with 0 time overlap conflicts!</p>
+          </div>
+          <button onclick="window.print()" class="px-3 py-1.5 bg-warped-cyan/20 hover:bg-warped-cyan/30 border border-warped-cyan/50 text-warped-cyan text-xs font-bold rounded-lg transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Print / Save Plan
+          </button>
+        </div>
+      `;
+
+      itinerary.forEach((act, idx) => {
+        const stats = getArtistRatingStats(act);
+        const nextAct = itinerary[idx + 1];
+        let transitionMinutes = 0;
+        if (nextAct) {
+          transitionMinutes = timeToMinutes(nextAct.startTime) - timeToMinutes(act.endTime);
+        }
+
+        html += `
+          <div class="bg-warped-card border border-warped-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-warped-cyan/50 transition shadow">
+            <div class="flex items-start sm:items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-warped-dark border border-warped-border flex flex-col items-center justify-center shrink-0">
+                <span class="text-[10px] text-gray-500 font-punk uppercase">Set</span>
+                <span class="text-xs font-bold text-white font-punk">#${idx + 1}</span>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="font-punk text-base font-bold text-white">${act.name}</h3>
+                  <span class="text-xs text-warped-yellow font-extrabold bg-warped-yellow/10 border border-warped-yellow/30 px-2 py-0.5 rounded">
+                    ★ ${stats.formatted}
+                  </span>
+                  <span class="text-xs text-gray-400 bg-warped-dark px-2 py-0.5 rounded border border-warped-border">
+                    ${act.stage}
+                  </span>
+                </div>
+                <div class="text-xs text-gray-400 mt-1 flex items-center gap-3">
+                  <span>⏰ ${formatTime12(act.startTime)} - ${formatTime12(act.endTime)}</span>
+                  <span>⏱ ${timeToMinutes(act.endTime) - timeToMinutes(act.startTime)} mins</span>
+                  ${act.notes ? `<span class="italic text-gray-500 max-w-xs truncate">${act.notes}</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Transition timing info -->
+            <div class="text-right sm:border-l sm:border-warped-border/60 sm:pl-4 shrink-0">
+              ${nextAct ? `
+                <div class="text-[11px] ${transitionMinutes < 15 ? 'text-amber-400' : 'text-gray-400'}">
+                  Next: ${formatTime12(nextAct.startTime)} (${transitionMinutes}m buffer)
+                </div>
+                <span class="text-[10px] text-gray-500 block">Walk to ${nextAct.stage}</span>
+              ` : `
+                <span class="text-xs text-emerald-400 font-bold uppercase font-punk">Final Set of Day!</span>
+              `}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function updateArtistScore(artistId, raterId, rawVal) {
+      const artist = artists.find(a => a.id === artistId);
+      if (!artist) return;
+
+      if (!artist.ratings) artist.ratings = {};
+
+      const numVal = parseFloat(rawVal);
+      if (rawVal === '' || isNaN(numVal)) {
+        delete artist.ratings[raterId];
+      } else {
+        artist.ratings[raterId] = Math.min(10, Math.max(0, numVal));
+      }
+
+      saveState();
+      renderApp();
+      showToast(`Updated rating for ${artist.name}`);
+    }
+
+    function switchView(viewName) {
+      currentView = viewName;
+      document.getElementById('view-spreadsheet').classList.toggle('hidden', viewName !== 'spreadsheet');
+      document.getElementById('view-conflicts').classList.toggle('hidden', viewName !== 'conflicts');
+      document.getElementById('view-schedule').classList.toggle('hidden', viewName !== 'schedule');
+
+      // Update button styles
+      const activeClass = 'bg-warped-yellow text-black shadow-md';
+      const inactiveClass = 'bg-warped-card hover:bg-zinc-800 text-gray-300 border border-warped-border';
+
+      document.getElementById('tab-btn-spreadsheet').className = `px-4 py-2 rounded-lg text-xs font-bold font-punk tracking-wide uppercase flex items-center gap-2 transition ${viewName === 'spreadsheet' ? activeClass : inactiveClass}`;
+      document.getElementById('tab-btn-conflicts').className = `px-4 py-2 rounded-lg text-xs font-bold font-punk tracking-wide uppercase flex items-center gap-2 transition ${viewName === 'conflicts' ? activeClass : inactiveClass}`;
+      document.getElementById('tab-btn-schedule').className = `px-4 py-2 rounded-lg text-xs font-bold font-punk tracking-wide uppercase flex items-center gap-2 transition ${viewName === 'schedule' ? activeClass : inactiveClass}`;
+
+      if (viewName === 'conflicts') renderConflicts();
+      if (viewName === 'schedule') renderScheduleTimeline();
+    }
+
+    function jumpToClash(artistId) {
+      switchView('conflicts');
+      showToast("Jumped to conflict view!");
+    }
+
+    function filterEarlyBands() {
+      switchView('spreadsheet');
+      document.getElementById('filter-clash').value = 'early_birds';
+      renderApp();
+      showToast("Filtered by early sets (before 2 PM)");
+    }
+
+    function toggleRatersModal(show) {
+      const modal = document.getElementById('raters-modal');
+      modal.classList.toggle('hidden', !show);
+      if (show) renderRatersList();
+    }
+
+    function renderRatersList() {
+      const listContainer = document.getElementById('raters-list-container');
+      let html = '';
+
+      raters.forEach((rater, idx) => {
+        html += `
+          <div class="flex items-center justify-between gap-2 p-2 bg-warped-dark border border-warped-border rounded-lg">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-full bg-warped-pink/20 text-warped-pink text-xs font-bold flex items-center justify-center font-punk">
+                ${idx + 1}
+              </span>
+              <input 
+                type="text" 
+                value="${rater.name}" 
+                onchange="renameRater('${rater.id}', this.value)"
+                class="bg-transparent border-b border-transparent hover:border-warped-border focus:border-warped-yellow text-xs font-bold text-white px-1 py-0.5 focus:outline-none"
+              />
+            </div>
+            ${raters.length > 1 ? `
+              <button onclick="removeRater('${rater.id}')" class="p-1 text-gray-500 hover:text-red-400 transition" title="Remove rater">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      listContainer.innerHTML = html;
+      document.getElementById('rater-count-badge').textContent = raters.length;
+      document.getElementById('mobile-rater-count').textContent = raters.length;
+    }
+
+    function addNewRater() {
+      const input = document.getElementById('new-rater-name');
+      const name = input.value.trim();
+      if (!name) return;
+
+      const newId = 'rater_' + Date.now();
+      raters.push({ id: newId, name });
+      input.value = '';
+      saveState();
+      renderRatersList();
+      renderApp();
+      showToast(`Added ${name} to the group rating squad!`);
+    }
+
+    function renameRater(id, newName) {
+      const clean = newName.trim();
+      if (!clean) return;
+      const r = raters.find(item => item.id === id);
+      if (r) {
+        r.name = clean;
+        saveState();
+        renderApp();
+        showToast(`Renamed to ${clean}`);
+      }
+    }
+
+    function removeRater(id) {
+      if (raters.length <= 1) return;
+      const r = raters.find(item => item.id === id);
+      const name = r ? r.name : 'Rater';
+
+      // Clean up artist ratings
+      artists.forEach(a => {
+        if (a.ratings && a.ratings[id]) {
+          delete a.ratings[id];
+        }
+      });
+
+      raters = raters.filter(item => item.id !== id);
+      saveState();
+      renderRatersList();
+      renderApp();
+      showToast(`Removed ${name} from raters`);
+    }
+
+    function openAddArtistModal() {
+      document.getElementById('artist-modal-title').textContent = 'Add Festival Artist';
+      document.getElementById('form-artist-id').value = '';
+      document.getElementById('form-artist-name').value = '';
+      document.getElementById('form-artist-day').value = 'Saturday';
+      document.getElementById('form-artist-stage').value = 'Vans Left Foot';
+      document.getElementById('form-artist-start').value = '14:00';
+      document.getElementById('form-artist-end').value = '14:40';
+      document.getElementById('form-artist-notes').value = '';
+      document.getElementById('artist-modal').classList.remove('hidden');
+    }
+
+    function openEditArtistModal(id) {
+      const art = artists.find(a => a.id === id);
+      if (!art) return;
+
+      document.getElementById('artist-modal-title').textContent = `Edit Set: ${art.name}`;
+      document.getElementById('form-artist-id').value = art.id;
+      document.getElementById('form-artist-name').value = art.name;
+      document.getElementById('form-artist-day').value = art.day;
+      document.getElementById('form-artist-stage').value = art.stage;
+      document.getElementById('form-artist-start').value = art.startTime;
+      document.getElementById('form-artist-end').value = art.endTime;
+      document.getElementById('form-artist-notes').value = art.notes || '';
+      document.getElementById('artist-modal').classList.remove('hidden');
+    }
+
+    function closeArtistModal() {
+      document.getElementById('artist-modal').classList.add('hidden');
+    }
+
+    function handleSaveArtist(e) {
+      e.preventDefault();
+      const id = document.getElementById('form-artist-id').value;
+      const name = document.getElementById('form-artist-name').value.trim();
+      const day = document.getElementById('form-artist-day').value;
+      const stage = document.getElementById('form-artist-stage').value.trim();
+      const startTime = document.getElementById('form-artist-start').value;
+      const endTime = document.getElementById('form-artist-end').value;
+      const notes = document.getElementById('form-artist-notes').value.trim();
+
+      if (id) {
+        // Update existing
+        const index = artists.findIndex(a => a.id === id);
+        if (index !== -1) {
+          artists[index] = {
+            ...artists[index],
+            name,
+            day,
+            stage,
+            startTime,
+            endTime,
+            notes
+          };
+          showToast(`Updated ${name}`);
+        }
+      } else {
+        // Add new
+        const newArt = {
+          id: 'art_' + Date.now(),
+          name,
+          day,
+          stage,
+          startTime,
+          endTime,
+          notes,
+          ratings: {}
+        };
+        artists.push(newArt);
+        showToast(`Added ${name} to festival lineup!`);
+      }
+
+      saveState();
+      closeArtistModal();
+      populateStageFilter();
+      renderApp();
+    }
+
+    function deleteArtist(id) {
+      const art = artists.find(a => a.id === id);
+      const name = art ? art.name : 'Artist';
+      artists = artists.filter(a => a.id !== id);
+      saveState();
+      populateStageFilter();
+      renderApp();
+      showToast(`Deleted ${name} from lineup`);
+    }
+
+    function exportToCSV() {
+      // Build headers
+      const headers = ['Artist', 'Day', 'Stage', 'Start Time', 'End Time', 'Average Rating', ...raters.map(r => r.name), 'Notes'];
+      const rows = [headers];
+
+      artists.forEach(a => {
+        const stats = getArtistRatingStats(a);
+        const raterScores = raters.map(r => (a.ratings && a.ratings[r.id] !== undefined) ? a.ratings[r.id] : '');
+        rows.push([
+          `"${a.name.replace(/"/g, '""')}"`,
+          `"${a.day}"`,
+          `"${a.stage.replace(/"/g, '""')}"`,
+          `"${a.startTime}"`,
+          `"${a.endTime}"`,
+          stats.average || '',
+          ...raterScores,
+          `"${(a.notes || '').replace(/"/g, '""')}"`
+        ]);
+      });
+
+      const csvContent = rows.map(e => e.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Warped_Tour_Orlando_Ratings_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("CSV file exported successfully!");
+    }
+
+    function importCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+          if (lines.length < 2) throw new Error("Invalid CSV format");
+
+          // Parse Header
+          const headerCols = parseCSVLine(lines[0]);
+          const baseCols = ['Artist', 'Day', 'Stage', 'Start Time', 'End Time', 'Average Rating'];
+          
+          // Detect extra rater columns
+          const newRaterNames = [];
+          for (let i = 6; i < headerCols.length - 1; i++) {
+            newRaterNames.push(headerCols[i].replace(/^"|"$/g, '').trim());
+          }
+
+          if (newRaterNames.length > 0) {
+            raters = newRaterNames.map((name, idx) => ({ id: `rater_import_${idx}`, name }));
+          }
+
+          const importedArtists = [];
+          for (let i = 1; i < lines.length; i++) {
+            const cols = parseCSVLine(lines[i]);
+            if (cols.length >= 5) {
+              const name = cols[0].replace(/^"|"$/g, '').trim();
+              const day = cols[1].replace(/^"|"$/g, '').trim() || 'Saturday';
+              const stage = cols[2].replace(/^"|"$/g, '').trim() || 'Main Stage';
+              const startTime = cols[3].replace(/^"|"$/g, '').trim() || '12:00';
+              const endTime = cols[4].replace(/^"|"$/g, '').trim() || '12:40';
+              const notes = (cols[cols.length - 1] || '').replace(/^"|"$/g, '').trim();
+
+              const ratings = {};
+              raters.forEach((r, rIdx) => {
+                const colIdx = 6 + rIdx;
+                if (cols[colIdx] && !isNaN(Number(cols[colIdx]))) {
+                  ratings[r.id] = Number(cols[colIdx]);
+                }
+              });
+
+              importedArtists.push({
+                id: `art_imp_${i}_${Date.now()}`,
+                name,
+                day,
+                stage,
+                startTime,
+                endTime,
+                notes,
+                ratings
+              });
+            }
+          }
+
+          if (importedArtists.length > 0) {
+            artists = importedArtists;
+            saveState();
+            populateStageFilter();
+            renderApp();
+            showToast(`Imported ${importedArtists.length} artists from CSV!`);
+          }
+        } catch (err) {
+          console.error("CSV import error:", err);
+          showToast("Failed to parse CSV file. Ensure valid format.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    // Helper for quotes in CSV
+    function parseCSVLine(text) {
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (c === '"') {
+          inQuotes = !inQuotes;
+        } else if (c === ',' && !inQuotes) {
+          result.push(cur.trim());
+          cur = '';
+        } else {
+          cur += c;
+        }
+      }
+      result.push(cur.trim());
+      return result;
+    }
+
+    let toastTimeout;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const text = document.getElementById('toast-message');
+      text.textContent = msg;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3000);
+    }
+
+    function populateStageFilter() {
+      const stageSelect = document.getElementById('filter-stage');
+      const stages = Array.from(new Set(artists.map(a => a.stage))).sort();
+      const currentVal = stageSelect.value;
+      
+      let html = '<option value="all">All Stages</option>';
+      stages.forEach(s => {
+        html += `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`;
+      });
+      stageSelect.innerHTML = html;
+    }
+
+    function renderApp() {
+      renderSpreadsheetTable();
+      renderConflicts();
+      checkEarlyArrivalAlerts();
+      if (currentView === 'schedule') {
+        renderScheduleTimeline();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      populateStageFilter();
+      renderApp();
+    });
+  </script>
+</body>
+</html>
