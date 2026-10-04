@@ -182,7 +182,7 @@
           Avg Rating Scale: <strong>1 - 10</strong>
         </span>
         <span class="hidden md:inline text-warped-border">|</span>
-        <span class="hidden md:inline">Auto-saves locally</span>
+        <span id="sync-status" class="text-gray-500">Connecting…</span>
       </div>
     </div>
 
@@ -406,15 +406,37 @@
     </div>
   </div>
 
+  <div id="sync-gate" class="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm items-center justify-center p-6" style="display: none">
+    <div class="bg-warped-card border border-warped-border rounded-xl px-6 py-5 text-center shadow-2xl max-w-sm">
+      <p class="font-punk uppercase tracking-wide text-white">Connecting</p>
+      <p class="text-xs text-gray-400 mt-1">Loading the shared lineup…</p>
+    </div>
+  </div>
+
   <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2.5 bg-warped-card border border-warped-yellow text-white text-xs px-4 py-3 rounded-xl shadow-2xl">
     <svg id="toast-icon" class="w-4 h-4 text-warped-yellow shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
     <span id="toast-message">Action successful</span>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
   <script>
-    const STORAGE_KEY = 'warped_tour_orlando_data_v2';
+    const STORAGE_KEY = 'warped_tour_orlando_data_v3';
 
-    // Initial authentic Warped Tour Orlando lineup snapshot with real stages and conflicting set times
+    // Public web config from Firebase console. Safe to commit: these values identify
+    // the project, they do not grant admin access. Firestore rules control who can
+    // read and write lineups/orlando.
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDVnT1_cEVlIFeZ63PyMwD4q9HWbNN8U7s",
+      authDomain: "sweet-spatula.firebaseapp.com",
+      projectId: "sweet-spatula",
+      storageBucket: "sweet-spatula.firebasestorage.app",
+      messagingSenderId: "522593146818",
+      appId: "1:522593146818:web:cd7370b4ec16645748e85b",
+      measurementId: "G-ESFYQMZKDZ"
+    };
+
+    // Orlando 2026 lineup. Days are set; stage and set times are TBD until announced.
     const DEFAULT_RATERS = [
       { id: 'rater_1', name: 'Alex' },
       { id: 'rater_2', name: 'Jordan' },
@@ -423,401 +445,344 @@
     ];
 
     const DEFAULT_ARTISTS = [
-      // SATURDAY (Day 1)
-      {
-        id: 'art_1',
-        name: 'Walking Blue',
-        day: 'Saturday',
-        stage: 'Vans Left Foot',
-        startTime: '12:10',
-        endTime: '12:35',
-        notes: 'Early gate energetic opener',
-        ratings: { rater_1: 7, rater_2: 6, rater_3: 8, rater_4: 7 }
-      },
-      {
-        id: 'art_2',
-        name: 'Dan Kelly',
-        day: 'Saturday',
-        stage: 'Geico Stage',
-        startTime: '12:15',
-        endTime: '12:45',
-        notes: 'Acoustic vibe',
-        ratings: { rater_1: 5, rater_2: 4, rater_3: 6, rater_4: 5 }
-      },
-      {
-        id: 'art_3',
-        name: 'Head Automatica',
-        day: 'Saturday',
-        stage: 'Ghost Stage',
-        startTime: '12:32',
-        endTime: '13:02',
-        notes: 'Classic post-hardcore electronic dance rock',
-        ratings: { rater_1: 9, rater_2: 8, rater_3: 9, rater_4: 9 }
-      },
-      {
-        id: 'art_4',
-        name: 'The Maine',
-        day: 'Saturday',
-        stage: 'Vans Right Foot',
-        startTime: '12:38',
-        endTime: '13:08',
-        notes: 'Alt-rock singalongs',
-        ratings: { rater_1: 8, rater_2: 9, rater_3: 8, rater_4: 9 }
-      },
-      {
-        id: 'art_5',
-        name: 'Escape the Fate',
-        day: 'Saturday',
-        stage: 'Vans Left Foot',
-        startTime: '13:21',
-        endTime: '13:51',
-        notes: 'Post-hardcore anthems',
-        ratings: { rater_1: 7, rater_2: 6, rater_3: 7, rater_4: 7 }
-      },
-      {
-        id: 'art_6',
-        name: 'Knuckle Puck',
-        day: 'Saturday',
-        stage: 'Ghost Stage',
-        startTime: '13:38',
-        endTime: '14:08',
-        notes: 'High energy pop punk',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 9 }
-      },
-      {
-        id: 'art_7',
-        name: 'Mod Sun',
-        day: 'Saturday',
-        stage: 'Vans Right Foot',
-        startTime: '13:54',
-        endTime: '14:29',
-        notes: 'Hip-hop / Pop-punk crossover',
-        ratings: { rater_1: 6, rater_2: 5, rater_3: 7, rater_4: 6 }
-      },
-      {
-        id: 'art_8',
-        name: 'Story of the Year',
-        day: 'Saturday',
-        stage: 'Vans Left Foot',
-        startTime: '14:32',
-        endTime: '15:07',
-        notes: 'Page Avenue hits & backflips',
-        ratings: { rater_1: 10, rater_2: 9, rater_3: 10, rater_4: 9 }
-      },
-      {
-        id: 'art_9',
-        name: 'Fame On Fire',
-        day: 'Saturday',
-        stage: 'Ghost Stage',
-        startTime: '14:44',
-        endTime: '15:14',
-        notes: 'Modern rock / hard rock',
-        ratings: { rater_1: 7, rater_2: 6, rater_3: 6, rater_4: 6 }
-      },
-      {
-        id: 'art_10',
-        name: 'Plain White Ts',
-        day: 'Saturday',
-        stage: 'Vans Right Foot',
-        startTime: '15:10',
-        endTime: '15:50',
-        notes: 'Hey There Delilah massive crowd singalong',
-        ratings: { rater_1: 7, rater_2: 8, rater_3: 8, rater_4: 7 }
-      },
-      {
-        id: 'art_11',
-        name: 'Slaughter to Prevail',
-        day: 'Saturday',
-        stage: 'Vans Left Foot',
-        startTime: '15:53',
-        endTime: '16:33',
-        notes: 'Masked deathcore chaos & wall of death',
-        ratings: { rater_1: 8, rater_2: 5, rater_3: 7, rater_4: 8 }
-      },
-      {
-        id: 'art_12',
-        name: '3OH!3',
-        day: 'Saturday',
-        stage: 'Vans Right Foot',
-        startTime: '16:36',
-        endTime: '17:26',
-        notes: 'DONTTRUSTME party nostalgia',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 10 }
-      },
-      {
-        id: 'art_13',
-        name: 'Crown the Empire',
-        day: 'Saturday',
-        stage: 'Ghost Stage',
-        startTime: '16:56',
-        endTime: '17:31',
-        notes: 'Post-hardcore / metalcore',
-        ratings: { rater_1: 7, rater_2: 7, rater_3: 6, rater_4: 6 }
-      },
-      {
-        id: 'art_14',
-        name: 'Black Veil Brides',
-        day: 'Saturday',
-        stage: 'Vans Left Foot',
-        startTime: '17:29',
-        endTime: '18:19',
-        notes: 'The Legacy & In the End',
-        ratings: { rater_1: 8, rater_2: 7, rater_3: 8, rater_4: 7 }
-      },
-      {
-        id: 'art_15',
-        name: 'Pennywise',
-        day: 'Saturday',
-        stage: 'Vans Right Foot',
-        startTime: '18:22',
-        endTime: '19:22',
-        notes: 'SoCal Punk legends / Bro Hymn',
-        ratings: { rater_1: 8, rater_2: 9, rater_3: 9, rater_4: 8 }
-      },
-      {
-        id: 'art_16',
-        name: 'The Devil Wears Prada',
-        day: 'Saturday',
-        stage: 'Ghost Stage',
-        startTime: '19:28',
-        endTime: '20:08',
-        notes: 'Zombie EP & heavy metalcore',
-        ratings: { rater_1: 9, rater_2: 8, rater_3: 8, rater_4: 8 }
-      },
-      {
-        id: 'art_17',
-        name: 'Yellowcard',
-        day: 'Saturday',
-        stage: 'Vans Left Foot',
-        startTime: '19:25',
-        endTime: '20:25',
-        notes: 'Ocean Avenue violin & Florida hometown crowd!',
-        ratings: { rater_1: 10, rater_2: 10, rater_3: 10, rater_4: 10 }
-      },
-      {
-        id: 'art_18',
-        name: 'Wage War',
-        day: 'Saturday',
-        stage: 'Ghost Stage',
-        startTime: '20:54',
-        endTime: '21:34',
-        notes: 'Florida metalcore favorites',
-        ratings: { rater_1: 8, rater_2: 7, rater_3: 8, rater_4: 8 }
-      },
-      {
-        id: 'art_19',
-        name: 'State Champs',
-        day: 'Saturday',
-        stage: 'Beatbox Stage',
-        startTime: '21:37',
-        endTime: '22:17',
-        notes: 'Pop-punk kings',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 9, rater_4: 8 }
-      },
-      {
-        id: 'art_20',
-        name: 'Falling In Reverse',
-        day: 'Saturday',
-        stage: 'Vans Left Foot',
-        startTime: '21:46',
-        endTime: '23:00',
-        notes: 'Saturday Headliner',
-        ratings: { rater_1: 8, rater_2: 7, rater_3: 9, rater_4: 8 }
-      },
-
-      // SUNDAY (Day 2)
-      {
-        id: 'art_21',
-        name: 'Alyk',
-        day: 'Sunday',
-        stage: 'Vans Left Foot',
-        startTime: '11:25',
-        endTime: '11:50',
-        notes: 'Early gate Sunday opener',
-        ratings: { rater_1: 6, rater_2: 6, rater_3: 5, rater_4: 6 }
-      },
-      {
-        id: 'art_22',
-        name: 'Girlfriends',
-        day: 'Sunday',
-        stage: 'Vans Left Foot',
-        startTime: '12:26',
-        endTime: '12:56',
-        notes: 'Travis Barker produced pop punk',
-        ratings: { rater_1: 8, rater_2: 7, rater_3: 8, rater_4: 8 }
-      },
-      {
-        id: 'art_23',
-        name: 'We the Kings',
-        day: 'Sunday',
-        stage: 'Vans Right Foot',
-        startTime: '12:59',
-        endTime: '13:34',
-        notes: 'Florida natives (Check Yes Juliet)',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 10, rater_4: 9 }
-      },
-      {
-        id: 'art_24',
-        name: 'The Red Jumpsuit Apparatus',
-        day: 'Sunday',
-        stage: 'Vans Left Foot',
-        startTime: '13:37',
-        endTime: '14:12',
-        notes: 'Face Down & Don\'t You Fake It',
-        ratings: { rater_1: 9, rater_2: 8, rater_3: 9, rater_4: 8 }
-      },
-      {
-        id: 'art_25',
-        name: 'Bowling for Soup',
-        day: 'Sunday',
-        stage: 'Vans Right Foot',
-        startTime: '14:20',
-        endTime: '15:00',
-        notes: '1985 & Girl All the Bad Guys Want',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 9 }
-      },
-      {
-        id: 'art_26',
-        name: 'Mayday Parade',
-        day: 'Sunday',
-        stage: 'Vans Left Foot',
-        startTime: '14:58',
-        endTime: '15:38',
-        notes: 'Florida heroes (Miserable at Best)',
-        ratings: { rater_1: 10, rater_2: 10, rater_3: 9, rater_4: 10 }
-      },
-      {
-        id: 'art_27',
-        name: 'August Burns Red',
-        day: 'Sunday',
-        stage: 'Beatbox Stage',
-        startTime: '15:13',
-        endTime: '15:43',
-        notes: 'Heavy breakdowns',
-        ratings: { rater_1: 8, rater_2: 7, rater_3: 7, rater_4: 7 }
-      },
-      {
-        id: 'art_28',
-        name: 'The Wonder Years',
-        day: 'Sunday',
-        stage: 'Beatbox Stage',
-        startTime: '16:24',
-        endTime: '16:59',
-        notes: 'Came Out Swinging emo anthems',
-        ratings: { rater_1: 10, rater_2: 9, rater_3: 10, rater_4: 9 }
-      },
-      {
-        id: 'art_29',
-        name: 'Killswitch Engage',
-        day: 'Sunday',
-        stage: 'Vans Left Foot',
-        startTime: '16:34',
-        endTime: '17:24',
-        notes: 'Metalcore royalty (My Curse)',
-        ratings: { rater_1: 8, rater_2: 7, rater_3: 7, rater_4: 8 }
-      },
-      {
-        id: 'art_30',
-        name: 'Gym Class Heroes',
-        day: 'Sunday',
-        stage: 'Ghost Stage',
-        startTime: '17:02',
-        endTime: '17:42',
-        notes: 'Cupid\'s Chokehold & Stereo Hearts',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 9 }
-      },
-      {
-        id: 'art_31',
-        name: 'Four Year Strong',
-        day: 'Sunday',
-        stage: 'Beatbox Stage',
-        startTime: '17:45',
-        endTime: '18:25',
-        notes: 'Heavy melodic hardcore/easycore',
-        ratings: { rater_1: 9, rater_2: 8, rater_3: 8, rater_4: 9 }
-      },
-      {
-        id: 'art_32',
-        name: 'Chiodos',
-        day: 'Sunday',
-        stage: 'Ghost Stage',
-        startTime: '18:28',
-        endTime: '19:08',
-        notes: 'Craig Owens post-hardcore reunion',
-        ratings: { rater_1: 9, rater_2: 8, rater_3: 9, rater_4: 9 }
-      },
-      {
-        id: 'art_33',
-        name: 'Senses Fail',
-        day: 'Sunday',
-        stage: 'Ghost Stage',
-        startTime: '19:54',
-        endTime: '20:34',
-        notes: 'Let It Enfold You classics',
-        ratings: { rater_1: 8, rater_2: 8, rater_3: 9, rater_4: 8 }
-      },
-      {
-        id: 'art_34',
-        name: 'Boys Like Girls',
-        day: 'Sunday',
-        stage: 'Ghost Stage',
-        startTime: '21:20',
-        endTime: '22:00',
-        notes: 'The Great Escape nostalgia',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 8, rater_4: 8 }
-      },
-      {
-        id: 'art_35',
-        name: 'Less Than Jake',
-        day: 'Sunday',
-        stage: 'Beatbox Stage',
-        startTime: '20:37',
-        endTime: '21:17',
-        notes: 'Gainesville FL ska-punk royalty',
-        ratings: { rater_1: 9, rater_2: 9, rater_3: 9, rater_4: 9 }
-      },
-      {
-        id: 'art_36',
-        name: 'Streetlight Manifesto',
-        day: 'Sunday',
-        stage: 'Owen\'s Mixers',
-        startTime: '21:25',
-        endTime: '22:00',
-        notes: 'High-octane horns & intricate ska',
-        ratings: { rater_1: 9, rater_2: 8, rater_3: 10, rater_4: 8 }
-      }
+      // SATURDAY, NOVEMBER 14
+      { id: "art_1", name: "311", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_2", name: "Alexisonfire", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_3", name: "Allison", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_4", name: "Anthony Green & The Boom Done Band", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_5", name: "Arm's Length", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_6", name: "Atmosphere", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_7", name: "Bad Cop Bad Cop", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_8", name: "Between the Buried and Me", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_9", name: "Boston Manor", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_10", name: "Bowling for Soup", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_11", name: "Brayton", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_12", name: "Breathe Carolina", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_13", name: "Broadside", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_14", name: "Bryce Vine", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_15", name: "Carole's Daughter", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_16", name: "Clique", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_17", name: "División Minúscula", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_18", name: "Drain", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_19", name: "Dropkick Murphys", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_20", name: "Emmure", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_21", name: "Family Force 5", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_22", name: "Fieldhockey", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_23", name: "Fireworks", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_24", name: "Firsun", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_25", name: "Girlfriends", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_26", name: "Good Terms", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_27", name: "Grandson", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_28", name: "Gym Class Heroes", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_29", name: "Hawthorne Heights", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_30", name: "Holy Wars", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_31", name: "Honey Revenge", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_32", name: "Hoobastank", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_33", name: "I Set My Friends on Fire", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_34", name: "Initiate", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_35", name: "Joey Valence & Brae", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_36", name: "John Harvie", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_37", name: "Losers Club", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_38", name: "Marianas Trench", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_39", name: "Maybsomeday", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_40", name: "Maylene and the Sons of Disaster", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_41", name: "Norma Jean", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_42", name: "Origami Angel", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_43", name: "Oxymorrons", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_44", name: "People R Ugly", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_45", name: "Rain City Drive", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_46", name: "Raue", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_47", name: "Rosecoloredworld", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_48", name: "Saint Blonde", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_49", name: "Save Ferris", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_50", name: "Scarlet House", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_51", name: "Senses", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_52", name: "Silly Goose", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_53", name: "Silverstein", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_54", name: "Simple Plan", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_55", name: "Sleeping with Sirens", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_56", name: "South Arcade", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_57", name: "Sublime", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_58", name: "Suicide Silence", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_59", name: "Sunami", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_60", name: "The Academy Is...", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_61", name: "The Home Team", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_62", name: "The Summer Set", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_63", name: "The Wrecks", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_64", name: "Third Eye Blind", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_65", name: "Thousand Below", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_66", name: "Tillie", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_67", name: "TRXVIS", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_68", name: "Wesghost", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_69", name: "Winona Fighter", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_70", name: "Yelawolf", day: "Saturday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      // SUNDAY, NOVEMBER 15
+      { id: "art_71", name: "3OH!3", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_72", name: "All That Remains", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_73", name: "Bayside", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_74", name: "Beauty School Dropout", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_75", name: "Ben Quad", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_76", name: "Big Ass Truck I.E.", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_77", name: "Capstan", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_78", name: "Chlorine", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_79", name: "Citizen", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_80", name: "Codefendants", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_81", name: "Counterparts", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_82", name: "Daisy Grenade", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_83", name: "Dance Gavin Dance", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_84", name: "DeathbyRomy", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_85", name: "Dirty Heads", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_86", name: "Doobie", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_87", name: "Drop Dead, Gorgeous", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_88", name: "Elijah", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_89", name: "Emery", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_90", name: "Fit for a King", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_91", name: "Fox Lake", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_92", name: "Free Throw", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_93", name: "From First to Last", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_94", name: "Games We Play", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_95", name: "GANG!", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_96", name: "Gideon", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_97", name: "Glassjaw", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_98", name: "Haywire", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_99", name: "Holywatyr", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_100", name: "Hot Chelle Rae", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_101", name: "Hot Milk", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_102", name: "Hot Mulligan", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_103", name: "Iann Dior", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_104", name: "Insane Clown Posse", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_105", name: "Jimmy Eat World", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_106", name: "Joyce Manor", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_107", name: "Just Surrender", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_108", name: "Jutes", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_109", name: "KennyHoopla", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_110", name: "Lakeview", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_111", name: "Madball", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_112", name: "Makari", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_113", name: "Millington", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_114", name: "Motion City Soundtrack", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_115", name: "MxPx", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_116", name: "New Found Glory", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_117", name: "NIIS", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_118", name: "Pain of Truth", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_119", name: "Phantom Planet", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_120", name: "Reel Big Fish", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_121", name: "SACE6", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_122", name: "Scary Kids Scaring Kids", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_123", name: "Set It Off", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_124", name: "Set Your Goals", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_125", name: "Sitting on Saturn", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_126", name: "Stand Atlantic", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_127", name: "Super Sometimes", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_128", name: "Taking Back Sunday", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_129", name: "Teen Jesus and the Jean Teasers", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_130", name: "Teen Mortgage", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_131", name: "The Cab", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_132", name: "The Early November", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_133", name: "The Paradox", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_134", name: "The Starting Line", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_135", name: "The Used", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_136", name: "Thrice", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_137", name: "Upon a Burning Body", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_138", name: "Vana", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_139", name: "Vienna Vienna", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
+      { id: "art_140", name: "Wolves of Glendale", day: "Sunday", stage: "TBD", startTime: "TBD", endTime: "TBD", notes: "", ratings: {} },
     ];
-
     let raters = [];
     let artists = [];
     let currentView = 'spreadsheet';
     let scheduleDay = 'Saturday';
 
-    function loadState() {
+    let db = null;
+    let syncReady = false;
+    let applyingRemote = false;
+    let pendingWriteJson = null;
+    let pendingRemote = null;
+    let seedStarted = false;
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function lineupJson(data) {
+      return JSON.stringify({ raters: data.raters, artists: data.artists });
+    }
+
+    function currentJson() {
+      return lineupJson({ raters, artists });
+    }
+
+    function hasLineup(data) {
+      return !!(data && Array.isArray(data.raters) && Array.isArray(data.artists));
+    }
+
+    function firebaseConfigReady() {
+      return Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.appId);
+    }
+
+    function readLocal() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          raters = parsed.raters || DEFAULT_RATERS;
-          artists = parsed.artists || DEFAULT_ARTISTS;
-        } else {
-          raters = JSON.parse(JSON.stringify(DEFAULT_RATERS));
-          artists = JSON.parse(JSON.stringify(DEFAULT_ARTISTS));
-          saveState();
-        }
-      } catch (e) {
-        console.error("State loading error, resetting to defaults", e);
-        raters = JSON.parse(JSON.stringify(DEFAULT_RATERS));
-        artists = JSON.parse(JSON.stringify(DEFAULT_ARTISTS));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return hasLineup(parsed) ? parsed : null;
+      } catch (err) {
+        console.error("State loading error", err);
+        return null;
+      }
+    }
+
+    function writeLocal() {
+      try {
+        localStorage.setItem(STORAGE_KEY, currentJson());
+      } catch (err) {
+        console.error("Failed to cache lineup locally", err);
+      }
+    }
+
+    function hydrateFromLocalOrDefaults() {
+      const local = readLocal();
+      if (local) {
+        raters = local.raters;
+        artists = local.artists;
+      } else {
+        raters = clone(DEFAULT_RATERS);
+        artists = clone(DEFAULT_ARTISTS);
+      }
+    }
+
+    function setSyncStatus(state, label) {
+      const el = document.getElementById('sync-status');
+      if (!el) return;
+      const colors = {
+        live: 'text-emerald-400',
+        saving: 'text-amber-300',
+        error: 'text-red-400',
+        offline: 'text-gray-500'
+      };
+      el.className = colors[state] || 'text-gray-500';
+      el.textContent = label;
+    }
+
+    function setSyncGate(visible) {
+      const gate = document.getElementById('sync-gate');
+      if (!gate) return;
+      gate.style.display = visible ? 'flex' : 'none';
+    }
+
+    function isUserEditing() {
+      const el = document.activeElement;
+      if (!el || el === document.body) return false;
+      return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT';
+    }
+
+    function lineupRef() {
+      return db.collection('lineups').doc('orlando');
+    }
+
+    function adoptRemote(data) {
+      applyingRemote = true;
+      raters = clone(data.raters);
+      artists = clone(data.artists);
+      writeLocal();
+      applyingRemote = false;
+      syncReady = true;
+      pendingWriteJson = null;
+      const ratersOpen = !document.getElementById('raters-modal').classList.contains('hidden');
+      populateStageFilter();
+      renderApp();
+      if (ratersOpen) renderRatersList();
+      setSyncGate(false);
+      setSyncStatus('live', 'Live');
+    }
+
+    async function seedLineup() {
+      const local = readLocal();
+      const seed = local && local.artists.length
+        ? { raters: clone(local.raters), artists: clone(local.artists) }
+        : { raters: clone(DEFAULT_RATERS), artists: clone(DEFAULT_ARTISTS) };
+      await lineupRef().set({
+        raters: seed.raters,
+        artists: seed.artists,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    function handleSnapshot(snap) {
+      const data = snap.exists ? snap.data() : null;
+      if (!hasLineup(data)) {
+        if (seedStarted) return;
+        seedStarted = true;
+        seedLineup().catch((err) => {
+          seedStarted = false;
+          handleSyncError(err);
+        });
+        return;
+      }
+
+      const incoming = lineupJson(data);
+      if (pendingWriteJson && incoming !== pendingWriteJson) return;
+      if (incoming === currentJson()) {
+        pendingWriteJson = null;
+        syncReady = true;
+        setSyncGate(false);
+        setSyncStatus('live', 'Live');
+        writeLocal();
+        return;
+      }
+      if (isUserEditing()) {
+        pendingRemote = data;
+        setSyncStatus('live', 'Update waiting');
+        return;
+      }
+      adoptRemote(data);
+    }
+
+    function handleSyncError(err) {
+      console.error("Firebase sync error", err);
+      db = null;
+      syncReady = true;
+      if (!raters.length || !artists.length) hydrateFromLocalOrDefaults();
+      writeLocal();
+      populateStageFilter();
+      renderApp();
+      setSyncGate(false);
+      setSyncStatus('error', 'Sync off');
+      showToast("Firebase sync failed. This browser will keep a local copy.");
+    }
+
+    function startFirebaseSync() {
+      if (typeof firebase === 'undefined') {
+        handleSyncError(new Error("Firebase SDK failed to load"));
+        return;
+      }
+      try {
+        firebase.initializeApp(FIREBASE_CONFIG);
+        db = firebase.firestore();
+        lineupRef().onSnapshot(handleSnapshot, handleSyncError);
+      } catch (err) {
+        handleSyncError(err);
       }
     }
 
     function saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ raters, artists }));
-      } catch (err) {
-        console.error("Failed to save state to localStorage", err);
-      }
+      if (!syncReady || applyingRemote) return;
+      writeLocal();
+      if (!db) return;
+
+      const payload = { raters: clone(raters), artists: clone(artists) };
+      pendingWriteJson = lineupJson(payload);
+      setSyncStatus('saving', 'Saving…');
+      lineupRef().set({
+        raters: payload.raters,
+        artists: payload.artists,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch((err) => {
+        console.error("Failed to save lineup to Firestore", err);
+        pendingWriteJson = null;
+        setSyncStatus('error', 'Save failed');
+        showToast("Could not save to Firebase. A copy is still in this browser.");
+      });
     }
 
     function resetToSampleLineup() {
@@ -825,22 +790,50 @@
       artists = JSON.parse(JSON.stringify(DEFAULT_ARTISTS));
       saveState();
       renderApp();
-      showToast("Reset to default Orlando Warped Tour lineup!");
+      showToast("Reset the shared lineup to the default Orlando snapshot.");
     }
 
-    // Converts "HH:MM" into minutes from midnight for collision detection
+    // Converts "HH:MM" into minutes from midnight. "TBD" and other placeholders are unknown.
     function timeToMinutes(timeStr) {
-      if (!timeStr) return 0;
-      const parts = timeStr.split(':').map(Number);
-      return (parts[0] * 60) + (parts[1] || 0);
+      if (typeof timeStr !== 'string') return null;
+      const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) return null;
+      const hours = Number(match[1]);
+      const minutes = Number(match[2]);
+      if (hours > 23 || minutes > 59) return null;
+      return (hours * 60) + minutes;
+    }
+
+    function sortMinutes(timeStr) {
+      const mins = timeToMinutes(timeStr);
+      return mins === null ? Number.MAX_SAFE_INTEGER : mins;
     }
 
     function formatTime12(timeStr) {
-      if (!timeStr) return '';
-      const [h, m] = timeStr.split(':').map(Number);
-      const period = h >= 12 ? 'PM' : 'AM';
-      const displayHour = h % 12 === 0 ? 12 : h % 12;
-      return `${displayHour}:${m < 10 ? '0' + m : m} ${period}`;
+      const mins = timeToMinutes(timeStr);
+      if (mins === null) return timeStr || '';
+      const hours = Math.floor(mins / 60);
+      const minutes = mins % 60;
+      const period = hours >= 12 ? 'PM' : 'AM';
+      const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+      return `${displayHour}:${minutes < 10 ? '0' + minutes : minutes} ${period}`;
+    }
+
+    function formatSetWindow(startTime, endTime) {
+      const start = timeToMinutes(startTime);
+      const end = timeToMinutes(endTime);
+      if (start === null || end === null) {
+        if ((startTime || 'TBD') === (endTime || 'TBD')) return startTime || 'TBD';
+        return `${startTime || 'TBD'} - ${endTime || 'TBD'}`;
+      }
+      return `${formatTime12(startTime)} - ${formatTime12(endTime)}`;
+    }
+
+    function formatSetLength(startTime, endTime) {
+      const start = timeToMinutes(startTime);
+      const end = timeToMinutes(endTime);
+      if (start === null || end === null) return '';
+      return `${end - start} min set`;
     }
 
     // Calculates non-empty ratings average for an artist
@@ -876,6 +869,7 @@
       const aEnd = timeToMinutes(artistA.endTime);
       const bStart = timeToMinutes(artistB.startTime);
       const bEnd = timeToMinutes(artistB.endTime);
+      if (aStart === null || aEnd === null || bStart === null || bEnd === null) return false;
 
       // Overlap formula: (StartA < EndB) and (EndA > StartB)
       return (aStart < bEnd) && (aEnd > bStart);
@@ -898,7 +892,7 @@
         if (clashes.length > 0) {
           const group = [artist, ...clashes];
           // Sort by start time then name for canonical comparison
-          group.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime) || a.name.localeCompare(b.name));
+          group.sort((a, b) => sortMinutes(a.startTime) - sortMinutes(b.startTime) || a.name.localeCompare(b.name));
           
           const clusterKey = group.map(g => g.id).sort().join('_');
           if (!visitedPairs.has(clusterKey)) {
@@ -911,7 +905,7 @@
       // Sort clusters by day and start time
       return clusters.sort((a, b) => {
         if (a[0].day !== b[0].day) return a[0].day === 'Saturday' ? -1 : 1;
-        return timeToMinutes(a[0].startTime) - timeToMinutes(b[0].startTime);
+        return sortMinutes(a[0].startTime) - sortMinutes(b[0].startTime);
       });
     }
 
@@ -920,8 +914,8 @@
       const earlyMustSees = artists.filter(a => {
         const startMins = timeToMinutes(a.startTime);
         const stats = getArtistRatingStats(a);
-        return startMins <= 840 && stats.average >= 7.5; // before 2 PM & high rating
-      }).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+        return startMins !== null && startMins <= 840 && stats.average >= 7.5; // before 2 PM & high rating
+      }).sort((a, b) => sortMinutes(a.startTime) - sortMinutes(b.startTime));
 
       const banner = document.getElementById('early-arrival-banner');
       const countBadge = document.getElementById('early-bird-count');
@@ -984,7 +978,10 @@
         const stats = getArtistRatingStats(artist);
         if (clashVal === 'has_conflict' && conflicts.length === 0) return false;
         if (clashVal === 'must_see' && stats.average < 8.0) return false;
-        if (clashVal === 'early_birds' && timeToMinutes(artist.startTime) > 840) return false;
+        if (clashVal === 'early_birds') {
+          const startMins = timeToMinutes(artist.startTime);
+          if (startMins === null || startMins > 840) return false;
+        }
 
         return true;
       });
@@ -996,10 +993,10 @@
 
         if (sortBy === 'avg-desc') {
           if (statsB.average !== statsA.average) return statsB.average - statsA.average;
-          return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+          return sortMinutes(a.startTime) - sortMinutes(b.startTime);
         } else if (sortBy === 'time-asc') {
           if (a.day !== b.day) return a.day === 'Saturday' ? -1 : 1;
-          return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+          return sortMinutes(a.startTime) - sortMinutes(b.startTime);
         } else if (sortBy === 'name-asc') {
           return a.name.localeCompare(b.name);
         } else if (sortBy === 'conflict-first') {
@@ -1026,7 +1023,8 @@
         filtered.forEach(artist => {
           const stats = getArtistRatingStats(artist);
           const conflicts = getConflictsForArtist(artist);
-          const isEarly = timeToMinutes(artist.startTime) <= 840; // before 2pm
+          const startMins = timeToMinutes(artist.startTime);
+          const isEarly = startMins !== null && startMins <= 840; // before 2pm
           const isMustSee = stats.average >= 8.5;
           const hasClashes = conflicts.length > 0;
 
@@ -1071,8 +1069,8 @@
 
               <!-- Set Time -->
               <td class="py-3 px-3 whitespace-nowrap">
-                <div class="font-semibold text-gray-200">${formatTime12(artist.startTime)} - ${formatTime12(artist.endTime)}</div>
-                <div class="text-[10px] text-gray-500">${timeToMinutes(artist.endTime) - timeToMinutes(artist.startTime)} min set</div>
+                <div class="font-semibold text-gray-200">${formatSetWindow(artist.startTime, artist.endTime)}</div>
+                ${formatSetLength(artist.startTime, artist.endTime) ? `<div class="text-[10px] text-gray-500">${formatSetLength(artist.startTime, artist.endTime)}</div>` : ''}
               </td>
 
               <!-- Artist Name & Genre -->
@@ -1280,7 +1278,7 @@
       // Build optimal itinerary:
       // Sort artists by start time, and where there are clashes, prioritize highest average rating
       const sorted = [...dayArtists].sort((a, b) => {
-        return timeToMinutes(a.startTime) - timeToMinutes(b.startTime) || getArtistRatingStats(b).average - getArtistRatingStats(a).average;
+        return sortMinutes(a.startTime) - sortMinutes(b.startTime) || getArtistRatingStats(b).average - getArtistRatingStats(a).average;
       });
 
       // Greedy non-overlapping highest rating itinerary
@@ -1292,12 +1290,13 @@
         const start = timeToMinutes(act.startTime);
         const end = timeToMinutes(act.endTime);
         const stats = getArtistRatingStats(act);
+        if (start === null || end === null) return;
 
         // Check if there is an overlapping set already picked
         const hasOverlap = itinerary.some(picked => {
           const pStart = timeToMinutes(picked.startTime);
           const pEnd = timeToMinutes(picked.endTime);
-          return (start < pEnd) && (end > pStart);
+          return pStart !== null && pEnd !== null && (start < pEnd) && (end > pStart);
         });
 
         if (!hasOverlap && stats.average >= 5.0) {
@@ -1333,7 +1332,9 @@
         const nextAct = itinerary[idx + 1];
         let transitionMinutes = 0;
         if (nextAct) {
-          transitionMinutes = timeToMinutes(nextAct.startTime) - timeToMinutes(act.endTime);
+          const nextStart = timeToMinutes(nextAct.startTime);
+          const actEnd = timeToMinutes(act.endTime);
+          transitionMinutes = (nextStart === null || actEnd === null) ? null : nextStart - actEnd;
         }
 
         html += `
@@ -1354,8 +1355,8 @@
                   </span>
                 </div>
                 <div class="text-xs text-gray-400 mt-1 flex items-center gap-3">
-                  <span>⏰ ${formatTime12(act.startTime)} - ${formatTime12(act.endTime)}</span>
-                  <span>⏱ ${timeToMinutes(act.endTime) - timeToMinutes(act.startTime)} mins</span>
+                  <span>⏰ ${formatSetWindow(act.startTime, act.endTime)}</span>
+                  ${formatSetLength(act.startTime, act.endTime) ? `<span>⏱ ${formatSetLength(act.startTime, act.endTime)}</span>` : ''}
                   ${act.notes ? `<span class="italic text-gray-500 max-w-xs truncate">${act.notes}</span>` : ''}
                 </div>
               </div>
@@ -1364,8 +1365,8 @@
             <!-- Transition timing info -->
             <div class="text-right sm:border-l sm:border-warped-border/60 sm:pl-4 shrink-0">
               ${nextAct ? `
-                <div class="text-[11px] ${transitionMinutes < 15 ? 'text-amber-400' : 'text-gray-400'}">
-                  Next: ${formatTime12(nextAct.startTime)} (${transitionMinutes}m buffer)
+                <div class="text-[11px] ${transitionMinutes !== null && transitionMinutes < 15 ? 'text-amber-400' : 'text-gray-400'}">
+                  Next: ${formatTime12(nextAct.startTime)}${transitionMinutes === null ? '' : ` (${transitionMinutes}m buffer)`}
                 </div>
                 <span class="text-[10px] text-gray-500 block">Walk to ${nextAct.stage}</span>
               ` : `
@@ -1756,10 +1757,31 @@
       }
     }
 
+    document.addEventListener('focusout', () => {
+      setTimeout(() => {
+        if (!pendingRemote || isUserEditing()) return;
+        const data = pendingRemote;
+        pendingRemote = null;
+        adoptRemote(data);
+      }, 0);
+    });
+
     window.addEventListener('DOMContentLoaded', () => {
-      loadState();
+      hydrateFromLocalOrDefaults();
       populateStageFilter();
       renderApp();
+
+      if (!firebaseConfigReady()) {
+        syncReady = true;
+        writeLocal();
+        setSyncStatus('offline', 'Local only — add Firebase config');
+        return;
+      }
+
+      syncReady = false;
+      setSyncGate(true);
+      setSyncStatus('saving', 'Connecting…');
+      startFirebaseSync();
     });
   </script>
 </body>
