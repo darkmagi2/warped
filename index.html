@@ -232,9 +232,7 @@
                 <th class="py-3 px-3 min-w-[190px]">Artist / Band</th>
                 <th class="py-3 px-3 min-w-[140px]">Stage</th>
                 <th class="py-3 px-3 w-28 text-center bg-zinc-900/90 text-warped-yellow border-x border-warped-border">Group Average</th>
-                <!-- Injected friend column headers -->
-                <th id="dynamic-rater-headers" class="py-3 px-1 text-center bg-zinc-900/40"></th>
-                <th class="py-3 px-3 w-28 text-center">Status / Clash</th>
+                <th id="status-header" class="py-3 px-3 w-28 text-center">Status / Clash</th>
                 <th class="py-3 px-2 w-16 text-center">Action</th>
               </tr>
             </thead>
@@ -681,14 +679,25 @@
     }
 
     function adoptRemote(data) {
+      if (!hasLineup(data)) {
+        console.error("Ignoring remote lineup missing raters or artists", data);
+        return;
+      }
+
       applyingRemote = true;
-      raters = clone(data.raters);
-      artists = clone(data.artists);
-      writeLocal();
-      applyingRemote = false;
+      try {
+        const nextRaters = clone(data.raters);
+        const nextArtists = clone(data.artists);
+        raters = nextRaters;
+        artists = nextArtists;
+        writeLocal();
+      } finally {
+        applyingRemote = false;
+      }
       syncReady = true;
       pendingWriteJson = null;
-      const ratersOpen = !document.getElementById('raters-modal').classList.contains('hidden');
+      const ratersModal = document.getElementById('raters-modal');
+      const ratersOpen = !!ratersModal && !ratersModal.classList.contains('hidden');
       populateStageFilter();
       renderApp();
       if (ratersOpen) renderRatersList();
@@ -940,21 +949,19 @@
       const clashVal = document.getElementById('filter-clash').value;
       const sortBy = document.getElementById('sort-by').value;
 
-      // Update Rater column headers in table header
-      const dynamicHeaderContainer = document.getElementById('dynamic-rater-headers');
-      if (dynamicHeaderContainer) {
-        let headersHtml = '';
-        raters.forEach(r => {
-          headersHtml += `
-            <th class="py-2 px-2 text-center w-20 min-w-[70px] border-r border-warped-border/60">
-              <div class="flex flex-col items-center">
-                <span class="text-white font-bold truncate max-w-[65px] font-sans" title="${r.name}">${r.name}</span>
-                <span class="text-[9px] text-gray-500 font-normal">Score</span>
-              </div>
-            </th>
-          `;
-        });
-        dynamicHeaderContainer.outerHTML = headersHtml ? `<th id="dynamic-rater-headers" class="hidden"></th>${headersHtml}` : '<th id="dynamic-rater-headers"></th>';
+      // Insert rater headers immediately before Status. A leftover placeholder cell was shifting these names one column right.
+      const statusHeader = document.getElementById('status-header');
+      if (statusHeader) {
+        statusHeader.parentElement.querySelectorAll('[data-rater-header]').forEach(cell => cell.remove());
+        const headersHtml = raters.map(r => `
+          <th data-rater-header class="py-2 px-2 text-center w-20 min-w-[70px] border-r border-warped-border/60">
+            <div class="flex flex-col items-center">
+              <span class="text-white font-bold truncate max-w-[65px] font-sans" title="${r.name}">${r.name}</span>
+              <span class="text-[9px] text-gray-500 font-normal">Score</span>
+            </div>
+          </th>
+        `).join('');
+        statusHeader.insertAdjacentHTML('beforebegin', headersHtml);
       }
 
       // Filter artists
