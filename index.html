@@ -111,20 +111,25 @@
             <button class="p-1.5 bg-warped-card border border-warped-border rounded-lg text-gray-400 hover:text-white">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
             </button>
-            <div class="absolute right-0 mt-1 w-44 bg-warped-card border border-warped-border rounded-xl shadow-2xl py-1 hidden group-hover:block z-50">
+            <div class="absolute right-0 mt-1 w-56 bg-warped-card border border-warped-border rounded-xl shadow-2xl py-1 hidden group-hover:block z-50">
               <button onclick="exportToCSV()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
                 <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 Export CSV Spreadsheet
               </button>
+              <button onclick="document.getElementById('set-times-csv-input').click()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-warped-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Update Set Times (CSV)
+              </button>
               <button onclick="document.getElementById('csv-file-input').click()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
                 <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Import CSV File
+                Import Full CSV File
               </button>
               <button onclick="resetToSampleLineup()" class="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-warped-border hover:text-red-300 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 Reload Default Lineup
               </button>
             </div>
+            <input type="file" id="set-times-csv-input" accept=".csv" class="hidden" onchange="importSetTimesCSV(event)">
             <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="importCSV(event)">
           </div>
         </div>
@@ -1651,12 +1656,11 @@
 
           // Parse Header
           const headerCols = parseCSVLine(lines[0]);
-          const baseCols = ['Artist', 'Day', 'Stage', 'Start Time', 'End Time', 'Average Rating'];
           
           // Detect extra rater columns
           const newRaterNames = [];
           for (let i = 6; i < headerCols.length - 1; i++) {
-            newRaterNames.push(headerCols[i].replace(/^"|"$/g, '').trim());
+            newRaterNames.push(stripCSVQuotes(headerCols[i]));
           }
 
           if (newRaterNames.length > 0) {
@@ -1667,12 +1671,12 @@
           for (let i = 1; i < lines.length; i++) {
             const cols = parseCSVLine(lines[i]);
             if (cols.length >= 5) {
-              const name = cols[0].replace(/^"|"$/g, '').trim();
-              const day = cols[1].replace(/^"|"$/g, '').trim() || 'Saturday';
-              const stage = cols[2].replace(/^"|"$/g, '').trim() || 'Main Stage';
-              const startTime = cols[3].replace(/^"|"$/g, '').trim() || '12:00';
-              const endTime = cols[4].replace(/^"|"$/g, '').trim() || '12:40';
-              const notes = (cols[cols.length - 1] || '').replace(/^"|"$/g, '').trim();
+              const name = stripCSVQuotes(cols[0]);
+              const day = stripCSVQuotes(cols[1]) || 'Saturday';
+              const stage = stripCSVQuotes(cols[2]) || 'Main Stage';
+              const startTime = stripCSVQuotes(cols[3]) || '12:00';
+              const endTime = stripCSVQuotes(cols[4]) || '12:40';
+              const notes = stripCSVQuotes(cols[cols.length - 1] || '');
 
               const ratings = {};
               raters.forEach((r, rIdx) => {
@@ -1709,6 +1713,197 @@
       };
       reader.readAsText(file);
       event.target.value = '';
+    }
+
+    // Updates stage/start/end on existing artists from a simple Band Name, Time, Stage CSV.
+    // Preserves ratings, notes, ids, and day (unless a Day column is present).
+    function importSetTimesCSV(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const text = e.target.result;
+          const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
+          if (lines.length < 2) throw new Error("CSV needs a header row and at least one data row");
+
+          const headers = parseCSVLine(lines[0]).map(h => normalizeHeaderKey(stripCSVQuotes(h)));
+          const nameIdx = findHeaderIndex(headers, ['band name', 'band', 'artist', 'artist name', 'name']);
+          const timeIdx = findHeaderIndex(headers, ['time', 'set time', 'start time', 'start']);
+          const endIdx = findHeaderIndex(headers, ['end time', 'end']);
+          const stageIdx = findHeaderIndex(headers, ['stage']);
+          const dayIdx = findHeaderIndex(headers, ['day']);
+
+          if (nameIdx === -1 || timeIdx === -1 || stageIdx === -1) {
+            throw new Error("CSV must include Band Name, Time, and Stage columns");
+          }
+
+          const byName = new Map();
+          artists.forEach(artist => {
+            const key = normalizeArtistName(artist.name);
+            if (!byName.has(key)) byName.set(key, []);
+            byName.get(key).push(artist);
+          });
+
+          let updated = 0;
+          const unmatched = [];
+          const ambiguous = [];
+
+          for (let i = 1; i < lines.length; i++) {
+            const cols = parseCSVLine(lines[i]);
+            const bandName = stripCSVQuotes(cols[nameIdx] || '');
+            if (!bandName) continue;
+
+            const stage = stripCSVQuotes(cols[stageIdx] || '').trim();
+            const timeRaw = stripCSVQuotes(cols[timeIdx] || '').trim();
+            const endRaw = endIdx >= 0 ? stripCSVQuotes(cols[endIdx] || '').trim() : '';
+            const dayRaw = dayIdx >= 0 ? stripCSVQuotes(cols[dayIdx] || '').trim() : '';
+
+            const parsed = parseSetTimeValue(endRaw ? `${timeRaw} - ${endRaw}` : timeRaw);
+            if (!parsed) {
+              unmatched.push(`${bandName} (bad time: ${timeRaw || 'blank'})`);
+              continue;
+            }
+
+            const matches = byName.get(normalizeArtistName(bandName)) || [];
+            if (matches.length === 0) {
+              unmatched.push(bandName);
+              continue;
+            }
+            if (matches.length > 1 && dayRaw) {
+              const dayMatches = matches.filter(a => a.day.toLowerCase() === dayRaw.toLowerCase());
+              if (dayMatches.length === 1) {
+                applySetTimeUpdate(dayMatches[0], stage, parsed, dayRaw);
+                updated++;
+                continue;
+              }
+            }
+            if (matches.length > 1) {
+              ambiguous.push(bandName);
+              matches.forEach(artist => applySetTimeUpdate(artist, stage, parsed, dayRaw));
+              updated += matches.length;
+              continue;
+            }
+
+            applySetTimeUpdate(matches[0], stage, parsed, dayRaw);
+            updated++;
+          }
+
+          if (updated > 0) {
+            saveState();
+            populateStageFilter();
+            renderApp();
+          }
+
+          const parts = [`Updated ${updated} set${updated === 1 ? '' : 's'}`];
+          if (unmatched.length) parts.push(`${unmatched.length} unmatched`);
+          if (ambiguous.length) parts.push(`${ambiguous.length} multi-match`);
+          showToast(parts.join(' · '));
+
+          if (unmatched.length) {
+            console.warn('Set-times CSV unmatched bands:', unmatched);
+          }
+          if (ambiguous.length) {
+            console.warn('Set-times CSV ambiguous band names (updated all matches):', ambiguous);
+          }
+        } catch (err) {
+          console.error("Set-times CSV import error:", err);
+          showToast(err.message || "Failed to parse set-times CSV.");
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function applySetTimeUpdate(artist, stage, parsed, dayRaw) {
+      if (stage) artist.stage = stage;
+      artist.startTime = parsed.startTime;
+      artist.endTime = parsed.endTime;
+      if (dayRaw && /^(saturday|sunday)$/i.test(dayRaw)) {
+        artist.day = dayRaw.charAt(0).toUpperCase() + dayRaw.slice(1).toLowerCase();
+      }
+    }
+
+    function stripCSVQuotes(value) {
+      return String(value || '').replace(/^"|"$/g, '').replace(/""/g, '"').trim();
+    }
+
+    function normalizeHeaderKey(value) {
+      return String(value || '').toLowerCase().replace(/[_/]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function findHeaderIndex(headers, aliases) {
+      for (const alias of aliases) {
+        const idx = headers.indexOf(alias);
+        if (idx !== -1) return idx;
+      }
+      return -1;
+    }
+
+    function normalizeArtistName(name) {
+      return String(name || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .replace(/\s+/g, ' ');
+    }
+
+    // Accepts "1:00 PM", "13:00", "1pm-1:40pm", "1:00 PM - 1:40 PM", etc.
+    // Single times default to a 40-minute set (Warped-style).
+    function parseSetTimeValue(raw) {
+      const text = String(raw || '').trim();
+      if (!text || /^tbd$/i.test(text)) return null;
+
+      const rangeParts = text.split(/\s*(?:-|–|—|to)\s*/i).filter(Boolean);
+      if (rangeParts.length >= 2) {
+        const start = parseClockTo24h(rangeParts[0]);
+        const end = parseClockTo24h(rangeParts[1]);
+        if (start && end) return { startTime: start, endTime: end };
+      }
+
+      const startOnly = parseClockTo24h(text);
+      if (!startOnly) return null;
+      const startMins = timeToMinutes(startOnly);
+      const endMins = (startMins + 40) % (24 * 60);
+      return {
+        startTime: startOnly,
+        endTime: minutesToHHMM(endMins)
+      };
+    }
+
+    function parseClockTo24h(raw) {
+      const text = String(raw || '').trim().toLowerCase().replace(/\./g, '');
+      if (!text) return null;
+
+      let match = text.match(/^(\d{1,2}):(\d{2})\s*(am|pm)?$/i);
+      if (!match) {
+        match = text.match(/^(\d{1,2})\s*(am|pm)$/i);
+        if (!match) return null;
+        match = [match[0], match[1], '00', match[2]];
+      }
+
+      let hours = Number(match[1]);
+      const minutes = Number(match[2]);
+      const meridiem = (match[3] || '').toLowerCase();
+      if (Number.isNaN(hours) || Number.isNaN(minutes) || minutes > 59) return null;
+
+      if (meridiem === 'pm' && hours < 12) hours += 12;
+      if (meridiem === 'am' && hours === 12) hours = 0;
+      // Festival heuristic: bare "1:00".."10:00" usually means PM, not overnight.
+      if (!meridiem && hours >= 1 && hours <= 10) hours += 12;
+      if (hours < 0 || hours > 23) return null;
+
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+
+    function minutesToHHMM(totalMinutes) {
+      const hours = Math.floor(totalMinutes / 60) % 24;
+      const minutes = totalMinutes % 60;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     }
 
     // Helper for quotes in CSV
