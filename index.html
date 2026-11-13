@@ -107,27 +107,29 @@
             <span>Add Artist</span>
           </button>
 
-          <div class="relative group">
-            <button class="p-1.5 bg-warped-card border border-warped-border rounded-lg text-gray-400 hover:text-white">
+          <div id="actions-menu" class="relative">
+            <button type="button" onclick="toggleActionsMenu(event)" class="p-1.5 bg-warped-card border border-warped-border rounded-lg text-gray-400 hover:text-white" aria-haspopup="true" aria-expanded="false" aria-controls="actions-menu-panel">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg>
             </button>
-            <div class="absolute right-0 mt-1 w-56 bg-warped-card border border-warped-border rounded-xl shadow-2xl py-1 hidden group-hover:block z-50">
-              <button onclick="exportToCSV()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
-                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Export CSV Spreadsheet
-              </button>
-              <button onclick="document.getElementById('set-times-csv-input').click()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
-                <svg class="w-4 h-4 text-warped-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Update Set Times (CSV)
-              </button>
-              <button onclick="document.getElementById('csv-file-input').click()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
-                <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Import Full CSV File
-              </button>
-              <button onclick="resetToSampleLineup()" class="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-warped-border hover:text-red-300 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                Reload Default Lineup
-              </button>
+            <div id="actions-menu-panel" class="absolute right-0 top-full pt-1 w-56 z-50 hidden" role="menu">
+              <div class="bg-warped-card border border-warped-border rounded-xl shadow-2xl py-1">
+                <button type="button" onclick="closeActionsMenu(); exportToCSV()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
+                  <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                  Export CSV Spreadsheet
+                </button>
+                <button type="button" onclick="closeActionsMenu(); document.getElementById('set-times-csv-input').click()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
+                  <svg class="w-4 h-4 text-warped-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Update Set Times (CSV)
+                </button>
+                <button type="button" onclick="closeActionsMenu(); document.getElementById('csv-file-input').click()" class="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-warped-border hover:text-white flex items-center gap-2">
+                  <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                  Import Full CSV File
+                </button>
+                <button type="button" onclick="closeActionsMenu(); resetToSampleLineup()" class="w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-warped-border hover:text-red-300 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  Reload Default Lineup
+                </button>
+              </div>
             </div>
             <input type="file" id="set-times-csv-input" accept=".csv" class="hidden" onchange="importSetTimesCSV(event)">
             <input type="file" id="csv-file-input" accept=".csv" class="hidden" onchange="importCSV(event)">
@@ -1446,6 +1448,23 @@
       if (show) renderRatersList();
     }
 
+    function toggleActionsMenu(event) {
+      event.stopPropagation();
+      const panel = document.getElementById('actions-menu-panel');
+      const trigger = event.currentTarget;
+      const willOpen = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !willOpen);
+      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+
+    function closeActionsMenu() {
+      const panel = document.getElementById('actions-menu-panel');
+      const trigger = document.querySelector('#actions-menu > button');
+      if (!panel || panel.classList.contains('hidden')) return;
+      panel.classList.add('hidden');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
     function renderRatersList() {
       const listContainer = document.getElementById('raters-list-container');
       let html = '';
@@ -1966,6 +1985,16 @@
         pendingRemote = null;
         adoptRemote(data);
       }, 0);
+    });
+
+    document.addEventListener('click', (event) => {
+      const menu = document.getElementById('actions-menu');
+      if (!menu || menu.contains(event.target)) return;
+      closeActionsMenu();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeActionsMenu();
     });
 
     window.addEventListener('DOMContentLoaded', () => {
